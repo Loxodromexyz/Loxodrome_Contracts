@@ -1,0 +1,26 @@
+deploy:
+- LOX 
+- VeArtProxy
+- VotingEscrow
+- RewardsDistributor
+- BribeFactory
+- WrappedExternalBribeFactory
+- PairFactory
+- GaugeFactory
+- Voter
+- Minter
+- Router
+- EpochController
+- pairApi
+- veNFTAPI
+
+parameters
+Set Dibs (PairFactory) input (owner address)
+Set staking Fee (PairFactory) input (owner address)
+Initialize (voter) input (LOX address, minter address)
+Initial Mint (LOX) input (50 000 000)
+Whitelist (voter) input (token address)
+set Minter (LOX) input (minter address)
+Initialize (Minter) input (address[] claimants,uint256[] amounts,uint256 max)
+Set Depositor (rewarddistribution) input (minter address)
+
