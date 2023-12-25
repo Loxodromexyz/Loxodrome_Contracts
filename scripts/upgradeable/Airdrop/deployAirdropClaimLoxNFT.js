@@ -11,16 +11,16 @@ async function main () {
 
   console.log('Deploying Contract...');
 
-  const _token = ethers.utils.getAddress("0xF4C8E32EaDEC4BFe97E0F595AdD0f4450a863a11")
-  const _ve = ethers.utils.getAddress("0xfBBF371C9B0B994EebFcC977CEf603F7f31c070D")
+  const _token = ethers.utils.getAddress("0xC251308803b08Dfec5be6Ef219f083Fd58979AEa")
+  const _ve = ethers.utils.getAddress("0x51E5ddf8B4b8b8C08D68fEbD3Bad379B1084ef3E")
 
-  /*data = await ethers.getContractFactory("AirdropClaimTheNFT");
-  airdropTheNFT = await data.deploy(_token, _ve);
-  txDeployed = await airdropTheNFT.deployed();
-  console.log("airdropTheNFT: ", airdropTheNFT.address)*/
+  // data = await ethers.getContractFactory("AirdropClaimLoxNFT");
+  // airdropLoxNFT = await data.deploy(_token, _ve);
+  // txDeployed = await airdropLoxNFT.deployed();
+  // console.log("airdropLoxNFT: ", airdropLoxNFT.address)
 
-  data = await ethers.getContractFactory("MerkleTreeTHENFT");
-  merkleTreeTHENFT = await data.deploy('0xf04ca87Fe55f413b027cE01d8c9DCd662495Fed4');
+  data = await ethers.getContractFactory("MerkleTreeLoxNFT");
+  merkleTreeTHENFT = await data.deploy('0x3c322F560c0eE9c51e2a1E289E1aD945119D7932');
   txDeployed = await merkleTreeTHENFT.deployed();
   console.log("MerkleTreeTHENFT: ", merkleTreeTHENFT.address)
 

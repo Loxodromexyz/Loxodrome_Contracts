@@ -9,9 +9,9 @@ async function main () {
 
     console.log('Deploying Contract...');
     
-    const veLox = '0x51E5ddf8B4b8b8C08D68fEbD3Bad379B1084ef3E'
-    const voter =	'0xe60c1a6a14201C59DEaAC4Db9FA06A142cE013B0'
-    const RewardsDistributor = '0x6fC9F444E926cDafC7D501D3a7C3d38f6B830a2c'
+    const veLox = '0x1033e636B89D1dF7cCed06b4026C10176CF737b0'
+    const voter =	'0x9fAdF1D2d40dAf4a957Ca50bAdc7f789fa9Dba53'
+    const RewardsDistributor = '0x82366Fc4AE2A9AAB1Db93Fa9d38c75AA8b2a032f'
 
     data = await ethers.getContractFactory("Minter");
     Minter = await data.deploy(voter, veLox, RewardsDistributor);

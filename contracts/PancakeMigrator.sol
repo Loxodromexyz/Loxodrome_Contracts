@@ -32,7 +32,7 @@ contract PancakeMigrator is ReentrancyGuard {
 
 
     /*
-        @dev migrate univ2 LP to Lox
+        @dev migrate univ2 LP to Loxo
         @param _lp      lp to migrate
         @param stable   boolean to create/add to a (non)stable pair. True = stable
     */

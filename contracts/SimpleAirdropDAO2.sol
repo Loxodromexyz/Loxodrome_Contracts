@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/IVotingEscrow.sol";
 
-interface ILoxholders {
+interface ILoxoholders {
     function originalMinters(address) external view returns(uint);
     function totalSupply() external view returns(uint);
     function reservedAmount() external view returns(uint);
@@ -20,7 +20,7 @@ contract SimpleAirdropDAO2 {
     address public owner;
     address public secondOwner;
     address public ve;
-    address public Lox;
+    address public LOXO;
     uint256 public amountPerUser;
 
     modifier onlyOwner {
@@ -35,7 +35,7 @@ contract SimpleAirdropDAO2 {
     constructor() {
         owner = msg.sender;
         ve = address(0xfBBF371C9B0B994EebFcC977CEf603F7f31c070D);
-        Lox = address(0xF4C8E32EaDEC4BFe97E0F595AdD0f4450a863a11);
+        LOXO = address(0xF4C8E32EaDEC4BFe97E0F595AdD0f4450a863a11);
         secondOwner = address(0x1c6C2498854662FDeadbC4F14eA2f30ca305104b);
         amountPerUser = 100 * 1e18; //544.14
     }
@@ -49,8 +49,8 @@ contract SimpleAirdropDAO2 {
         address _user;
         for(i; i < users.length; i++){
             _user = users[i];
-            IERC20(Lox).approve(ve, 0);
-            IERC20(Lox).approve(ve, amountPerUser);
+            IERC20(LOXO).approve(ve, 0);
+            IERC20(LOXO).approve(ve, amountPerUser);
             IVotingEscrow(ve).create_lock_for(amountPerUser, 86400 * 365 * 2, _user);
         }
     }

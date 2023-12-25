@@ -5,7 +5,7 @@ pragma solidity 0.8.13;
 import "./interfaces/IPair.sol";
 import "./interfaces/IRouter.sol";
 
-contract LoxLibrary {
+contract LoxoLibrary {
     IRouter internal immutable router;
 
     constructor(address _router) {

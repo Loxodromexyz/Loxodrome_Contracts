@@ -1,1 +1,2 @@
-# Loxodrome_Contracts
+# Loxodrome_contracts
+Loxodrome contracts

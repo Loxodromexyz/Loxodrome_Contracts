@@ -11,7 +11,7 @@ import "./interfaces/IWETH.sol";
 
 import 'hardhat/console.sol';
 
-interface LoxHolders {
+interface LoxoHolders {
     function originalMinters(address) external view returns(uint);
     function totalSupply() external view returns(uint);
     function reservedAmount() external view returns(uint);
@@ -27,7 +27,7 @@ contract Royalties is ReentrancyGuard {
 
     uint256 public epoch;
 
-    LoxHolders public Loxholders;
+    LoxoHolders public Loxoholders;
     address public owner;
 
     mapping(uint => uint) public feesPerEpoch;
@@ -49,11 +49,11 @@ contract Royalties is ReentrancyGuard {
     event Deposit(uint256 amount);
     event VestingUpdate(uint256 balance, uint256 vesting_period, uint256 tokenPerSec);
 
-    constructor(address _wbnb, address _Loxholders) {
+    constructor(address _wbnb, address _Loxoholders) {
         owner = msg.sender;
         wbnb = IERC20(_wbnb);
         // TODO:CHECK THIS BEFORE Deployment
-        Loxholders = LoxHolders(_Loxholders);
+        Loxoholders = LoxoHolders(_Loxoholders);
         epoch = 0;
     }
 
@@ -71,8 +71,8 @@ contract Royalties is ReentrancyGuard {
         }
 
         feesPerEpoch[epoch] = _amount;
-        totalSupply[epoch] = Loxholders.totalSupply();
-        reservedAmounts[epoch] = Loxholders.reservedAmount();
+        totalSupply[epoch] = Loxoholders.totalSupply();
+        reservedAmounts[epoch] = Loxoholders.reservedAmount();
         epoch++;
     }
 
@@ -102,7 +102,7 @@ contract Royalties is ReentrancyGuard {
 
     function claimable(address user) public view returns(uint) {
         require(user != address(0));
-        //Total fees * LoxHolders.originalMinters[msg.sender] / (LoxHolders.totalSupply - LoxHolders.reservedAmount)
+        //Total fees * LoxoHolders.originalMinters[msg.sender] / (LoxoHolders.totalSupply - LoxoHolders.reservedAmount)
         uint256 cp = userCheckpoint[user];
         if(cp >= epoch){
             return 0;
@@ -114,7 +114,7 @@ contract Royalties is ReentrancyGuard {
             uint256 _resAmnt = reservedAmounts[i];
             uint256 _tot = totalSupply[i];
             uint256 _fee = feesPerEpoch[i]; 
-            uint256 weight = Loxholders.originalMinters(user);
+            uint256 weight = Loxoholders.originalMinters(user);
             _reward += _fee * weight / (_tot - _resAmnt);
         }  
         return _reward;

@@ -11,9 +11,9 @@ async function main () {
     
     const veLox = '0x51E5ddf8B4b8b8C08D68fEbD3Bad379B1084ef3E'
 
-    const pairFactory =	'0x66Fd2800f05bC3c925d080c76e106507BDB79A6d'
-    const gaugeFactory = '0xDf59967F732535EAcFF2D73b434bEbdeDf9dd7Cd'
-    const bribeFactory = '0x00f8a2Ab042a0e62d851799b2afd49A9Ab0f5e24'
+    const pairFactory =	'0x2F65c1e37f67960BdBdBd717c34fCe733040A1C0'
+    const gaugeFactory = '0xeDE79ffbf23F76c40a72B8111666f62bf81a96ac'
+    const bribeFactory = '0xEEe204459B5d3dF578347635B825fD882F2b7639'
 
     data = await ethers.getContractFactory("Voter");
     Voter = await data.deploy(veLox, pairFactory, gaugeFactory, bribeFactory);

@@ -8,14 +8,14 @@ import {L2GovernorCountingSimple} from "./governance/L2GovernorCountingSimple.so
 import {L2GovernorVotes} from "./governance/L2GovernorVotes.sol";
 import {L2GovernorVotesQuorumFraction} from "./governance/L2GovernorVotesQuorumFraction.sol";
 
-abstract  contract LoxGovernor is L2Governor, L2GovernorCountingSimple, L2GovernorVotes, L2GovernorVotesQuorumFraction {
+abstract  contract LoxoGovernor is L2Governor, L2GovernorCountingSimple, L2GovernorVotes, L2GovernorVotesQuorumFraction {
     address public team;
     uint256 public constant MAX_PROPOSAL_NUMERATOR = 100; // max 10%
     uint256 public constant PROPOSAL_DENOMINATOR = 1000;
     uint256 public proposalNumerator = 2; // start at 0.02%
 
     constructor(IVotes _ve)
-        L2Governor("Lox Governor")
+        L2Governor("Loxodrome Governor")
         L2GovernorVotes(_ve)
         L2GovernorVotesQuorumFraction(4) // 4%
     {

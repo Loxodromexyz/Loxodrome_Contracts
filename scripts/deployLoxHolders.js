@@ -5,13 +5,13 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const LoxHoldersContract = await ethers.getContractFactory("contracts/LoxHolders.sol:LoxHolders");
-  const LoxHolders = await LoxHoldersContract.deploy(2000, '1000000000000000000');
+  const LoxoHoldersContract = await ethers.getContractFactory("contracts/LoxoHolders.sol:LoxoHolders");
+  const LoxoHolders = await LoxoHoldersContract.deploy(2000, '1000000000000000000');
 
   // Wait for this transaction to be mined
-  await LoxHolders.deployed();
+  await LoxoHolders.deployed();
 
-  console.log("LoxHolders address:", LoxHolders.address);
+  console.log("LoxHolders address:", LoxoHolders.address);
 }
 
 main()

@@ -2,9 +2,9 @@
 pragma solidity 0.8.13;
 
 
-contract TWBNB {
-    string public name     = "tWrapped BNB";
-    string public symbol   = "tWBNB";
+contract TWIOTX {
+    string public name     = "tWrapped IOTX";
+    string public symbol   = "tWIOTX";
     uint8  public decimals = 18;
 
     event  Approval(address indexed src, address indexed guy, uint wad);

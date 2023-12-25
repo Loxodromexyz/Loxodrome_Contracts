@@ -88,7 +88,7 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes {
     uint internal tokenId;
 
     /// @notice Contract constructor
-    /// @param token_addr `Lox` token address
+    /// @param token_addr `LOXO` token address
     constructor(address token_addr, address art_proxy) {
         token = token_addr;
         voter = msg.sender;
@@ -127,8 +127,8 @@ contract VotingEscrow is IERC721, IERC721Metadata, IVotes {
                              METADATA STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    string constant public name = "veLoxSWAP";
-    string constant public symbol = "veLox";
+    string constant public name = "veLoxodrome";
+    string constant public symbol = "veLOXO";
     string constant public version = "1.0.0";
     uint8 constant public decimals = 18;
 

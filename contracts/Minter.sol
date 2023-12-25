@@ -4,7 +4,7 @@ pragma solidity 0.8.13;
 import "./libraries/Math.sol";
 import "./interfaces/IMinter.sol";
 import "./interfaces/IRewardsDistributor.sol";
-import "./interfaces/ILox.sol";
+import "./interfaces/ILoxo.sol";
 import "./interfaces/IVoter.sol";
 import "./interfaces/IVotingEscrow.sol";
 
@@ -25,7 +25,7 @@ contract Minter is IMinter {
 
     uint internal constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
     // TODO: weekly emission is 10M
-    uint public weekly = 10_000_000 * 1e18; // represents a starting weekly emission of 2.6M Lox (Lox has 18 decimals)
+    uint public weekly = 2_400_000 * 1e18; // represents a starting weekly emission of 2.6M Loxo (Loxo has 18 decimals)
     uint public active_period;
     uint internal constant LOCK = 86400 * 7 * 52 * 2;
 
@@ -33,7 +33,7 @@ contract Minter is IMinter {
     address public team;
     address public pendingTeam;
     
-    ILox public immutable _Lox;
+    ILoxo public immutable _Loxo;
     IVoter public _voter;
     IVotingEscrow public immutable _ve;
     IRewardsDistributor public immutable _rewards_distributor;
@@ -49,7 +49,7 @@ contract Minter is IMinter {
         team = msg.sender;
         // TODO: Team rate is 5% and will be decreased in the future to 3%
         teamRate = 50; // 300 bps = 5%
-        _Lox = ILox(IVotingEscrow(__ve).token());
+        _Loxo = ILoxo(IVotingEscrow(__ve).token());
         _voter = IVoter(__voter);
         _ve = IVotingEscrow(__ve);
         _rewards_distributor = IRewardsDistributor(__rewards_distributor);
@@ -64,8 +64,8 @@ contract Minter is IMinter {
     ) external {
         require(initializer == msg.sender);
         if(max > 0){
-            _Lox.mint(address(this), max);
-            _Lox.approve(address(_ve), type(uint).max);
+            _Loxo.mint(address(this), max);
+            _Loxo.approve(address(_ve), type(uint).max);
             for (uint i = 0; i < claimants.length; i++) {
                 _ve.create_lock_for(amounts[i], LOCK, claimants[i]);
             }
@@ -112,7 +112,7 @@ contract Minter is IMinter {
 
     // calculate circulating supply as total token supply - locked supply
     function circulating_supply() public view returns (uint) {
-        return _Lox.totalSupply() - _ve.supply();
+        return _Loxo.totalSupply() - _ve.supply();
     }
 
     // emission calculation is 1% of available supply to mint adjusted by circulating / total supply
@@ -140,9 +140,9 @@ contract Minter is IMinter {
     function calculate_rebase(uint _weeklyMint) public view returns (uint) {
         // TODO: Rebase is 30%
         uint _veTotal = _ve.supply();
-        uint _LoxTotal = _Lox.totalSupply();
+        uint _LoxoTotal = _Loxo.totalSupply();
         
-        uint lockedShare = (_veTotal) * PRECISION  / _LoxTotal;
+        uint lockedShare = (_veTotal) * PRECISION  / _LoxoTotal;
         if(lockedShare >= REBASEMAX){
             return _weeklyMint * REBASEMAX / PRECISION;
         } else {
@@ -170,18 +170,18 @@ contract Minter is IMinter {
 
             uint _voterAmount = weekly - _rebase - _teamEmissions;
 
-            uint _balanceOf = _Lox.balanceOf(address(this));
+            uint _balanceOf = _Loxo.balanceOf(address(this));
             if (_balanceOf < _required) {
-                _Lox.mint(address(this), _required - _balanceOf);
+                _Loxo.mint(address(this), _required - _balanceOf);
             }
 
-            require(_Lox.transfer(team, _teamEmissions));
+            require(_Loxo.transfer(team, _teamEmissions));
             
-            require(_Lox.transfer(address(_rewards_distributor), _rebase));
+            require(_Loxo.transfer(address(_rewards_distributor), _rebase));
             _rewards_distributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
             _rewards_distributor.checkpoint_total_supply(); // checkpoint supply
 
-            _Lox.approve(address(_voter), _voterAmount);
+            _Loxo.approve(address(_voter), _voterAmount);
             _voter.notifyRewardAmount(_voterAmount);
 
             emit Mint(msg.sender, weekly, circulating_supply(), circulating_emission());

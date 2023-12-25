@@ -232,15 +232,15 @@ contract VoterV2 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
             }
         }
 
-        if (msg.sender != governor) { // gov can create for any pool, even non-Lox pairs
+        if (msg.sender != governor) { // gov can create for any pool, even non-Loxo pairs
             require(isPair, "!_pool");
             require(isWhitelisted[tokenA] && isWhitelisted[tokenB], "!whitelisted");
         }
 
-        string memory _type =  string.concat("Lox LP Fees: ", IERC20(_pool).symbol() );
+        string memory _type =  string.concat("Loxo LP Fees: ", IERC20(_pool).symbol() );
         address _internal_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
-        _type = string.concat("Lox Bribes: ", IERC20(_pool).symbol() );
+        _type = string.concat("Loxo Bribes: ", IERC20(_pool).symbol() );
         address _external_bribe = IBribeFactory(bribefactory).createBribe(owner(), tokenA, tokenB, _type);
 
         address _gauge = IGaugeFactory(gaugefactory).createGaugeV2(base, _ve, _pool, address(this), _internal_bribe, _external_bribe, isPair);

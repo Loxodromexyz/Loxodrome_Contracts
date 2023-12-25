@@ -1,10 +1,10 @@
 require("@nomiclabs/hardhat-waffle");
 
-require('@openzeppelin/hardhat-upgrades');
+// require('@openzeppelin/hardhat-upgrades');
 
-require("@nomiclabs/hardhat-etherscan");
+// require("@nomiclabs/hardhat-etherscan");
 
-require("@nomiclabs/hardhat-web3");
+// require("@nomiclabs/hardhat-web3");
 
 const { PRIVATEKEY, APIKEY } = require("./pvkey.js")
 
@@ -37,7 +37,31 @@ module.exports = {
   },
 
   networks: {
-   
+
+    bsc: {
+      url: "https://bsc-dataseed1.binance.org",
+      chainId: 56,
+      accounts: PRIVATEKEY
+    },
+
+    bscTestnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      accounts: PRIVATEKEY
+    },
+
+
+    op: {
+      url: "https://mainnet.optimism.io",
+      chainId: 10,
+      accounts: PRIVATEKEY
+    },
+
+    ftmt: {
+      url: "https://rpc.testnet.fantom.network",
+      chainId: 4002,
+      accounts: PRIVATEKEY
+    },
     IoTex_testnet: {
       url: "https://babel-api.testnet.iotex.io",
       chainId: 4690,

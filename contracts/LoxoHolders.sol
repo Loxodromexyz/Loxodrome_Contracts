@@ -8,10 +8,10 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 
 /**
- * @title LoxHolders contract
+ * @title LoxoHolders contract
  * @dev Extends ERC721 Non-Fungible Token Standard basic implementation
  */
-contract LoxHolders is ERC721Enumerable, Ownable {
+contract LoxoHolders is ERC721Enumerable, Ownable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -36,11 +36,12 @@ contract LoxHolders is ERC721Enumerable, Ownable {
     mapping(address => uint256) public privateSale;
     mapping(address => uint256) public whiteListSale;
     mapping(address => uint256) public publicSale;
+    mapping(address => uint256) public originalMinters;
 
     constructor(
         uint256 _maxSupply,
         uint256 _nftPrice
-    ) ERC721("LoxHolders", "LoxNFT") {
+    ) ERC721("LoxoHolders", "LoxoNFT") {
         MAX_SUPPLY = _maxSupply;
         NFT_PRICE = _nftPrice;
 
@@ -125,6 +126,7 @@ contract LoxHolders is ERC721Enumerable, Ownable {
             require(privateSale[msg.sender].add(amount) <= MAX_PER_MINT, "exceed maximum amount");
 
             privateSale[msg.sender] = privateSale[msg.sender].add(amount);
+            originalMinters[msg.sender] = originalMinters[msg.sender].add(amount);
             _mintTo(msg.sender, amount);
         }if(presale == Status.WhiteListSale){
             // Whitelisted mint price: 0.325 ETH and 10 NFTs per wallet
@@ -133,6 +135,7 @@ contract LoxHolders is ERC721Enumerable, Ownable {
             require(whiteListSale[msg.sender].add(amount) <= MAX_PER_MINT, "exceed maximum amount");
 
             whiteListSale[msg.sender] = whiteListSale[msg.sender].add(amount);
+            originalMinters[msg.sender] = originalMinters[msg.sender].add(amount);
             _mintTo(msg.sender, amount);
         }else if(presale == Status.PublicSale){
             // Public mint price: 0.35 ETH and 10 NFTs per wallet
@@ -140,6 +143,7 @@ contract LoxHolders is ERC721Enumerable, Ownable {
             require(publicSale[msg.sender].add(amount) <= MAX_PER_MINT, "exceed maximum amount");
 
             publicSale[msg.sender] = publicSale[msg.sender].add(amount);
+            originalMinters[msg.sender] = originalMinters[msg.sender].add(amount);
             _mintTo(msg.sender, amount);
         }
     }

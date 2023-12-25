@@ -8,7 +8,7 @@ async function main () {
   accounts = await ethers.getSigners();
   owner = accounts[0]
     
-  const voter = ethers.utils.getAddress("0xe60c1a6a14201C59DEaAC4Db9FA06A142cE013B0")
+  const voter = ethers.utils.getAddress("0x9fAdF1D2d40dAf4a957Ca50bAdc7f789fa9Dba53")
 
 
   console.log('Deploying Contract...');

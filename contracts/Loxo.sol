@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.13;
 
-import "./interfaces/ILox.sol";
+import "./interfaces/ILoxo.sol";
 
-contract Lox is ILox {
-    string public constant name = "LoxSWAP";
-    string public constant symbol = "Lox";
+contract Loxo is ILoxo {
+    string public constant name = "Loxodrome";
+    string public constant symbol = "LOXO";
     uint8 public constant decimals = 18;
     uint public totalSupply = 0;
 
@@ -26,7 +26,7 @@ contract Lox is ILox {
     }
 
     // No checks as its meant to be once off to set minting rights to BaseV1 Minter
-    // TODO: You should give access to Minter.sol for further automatic LoxSWAP mints
+    // TODO: You should give access to Minter.sol for further automatic Loxodrom mints
     function setMinter(address _minter) external {
         require(msg.sender == minter);
         minter = _minter;
@@ -37,7 +37,7 @@ contract Lox is ILox {
     function initialMint(address _recipient) external {
         require(msg.sender == minter && !initialMinted);
         initialMinted = true;
-        _mint(_recipient, 200 * 1e6 * 1e18);
+        _mint(_recipient, 50 * 1e6 * 1e18);
     }
 
     function approve(address _spender, uint _value) external returns (bool) {

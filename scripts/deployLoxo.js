@@ -10,10 +10,10 @@ async function main () {
     console.log('Deploying Contract...');
     
     
-    data = await ethers.getContractFactory("Lox");
-    lox = await data.deploy();
-    txDeployed = await lox.deployed();
-    console.log("Lox Address: ", lox.address)
+    data = await ethers.getContractFactory("Loxo");
+    Loxo = await data.deploy();
+    txDeployed = await Loxo.deployed();
+    console.log("Loxo Address: ", Loxo.address)
 
     data = await ethers.getContractFactory("VeArtProxy");
     veArtProxy = await data.deploy();
@@ -21,12 +21,12 @@ async function main () {
     console.log("veArtProxy Address: ", veArtProxy.address)
 
     data = await ethers.getContractFactory("VotingEscrow");
-    veLox = await data.deploy(lox.address, veArtProxy.address);
-    txDeployed = await veLox.deployed();
-    console.log("veLox Address: ", veLox.address)
+    veLoxo = await data.deploy(Loxo.address, veArtProxy.address);
+    txDeployed = await veLoxo.deployed();
+    console.log("veLoxo Address: ", veLoxo.address)
 
     data = await ethers.getContractFactory("RewardsDistributor");
-    RewardsDistributor = await data.deploy(veLox.address);
+    RewardsDistributor = await data.deploy(veLoxo.address);
     txDeployed = await RewardsDistributor.deployed();
     console.log("RewardsDistributor Address: ", RewardsDistributor.address)
 
