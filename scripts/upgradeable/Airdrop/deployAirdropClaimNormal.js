@@ -11,8 +11,8 @@ async function main () {
 
   console.log('Deploying Contract...');
 
-  const _token = ethers.utils.getAddress("0xF4C8E32EaDEC4BFe97E0F595AdD0f4450a863a11")
-  const _ve = ethers.utils.getAddress("0xfBBF371C9B0B994EebFcC977CEf603F7f31c070D")
+  const _token = ethers.utils.getAddress("0x3365406A7A2aA4F20991c09a4416C4069B50F4da")
+  const _ve = ethers.utils.getAddress("0x140e0529695639BAd188371f38E788C438b9ae3B")
 
   data = await ethers.getContractFactory("AirdropClaim");
   AirdropClaim = await data.deploy(_token, _ve);

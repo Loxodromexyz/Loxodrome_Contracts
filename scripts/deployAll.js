@@ -12,25 +12,25 @@ async function main () {
 
 // step 0 deploy NFT contract 
 
-  const LoxoHoldersContract = await ethers.getContractFactory("contracts/LoxoHolders.sol:LoxoHolders");
-  const LoxoHolders = await LoxoHoldersContract.deploy(2000, '1000000000000000000');
+  // const LoxoHoldersContract = await ethers.getContractFactory("contracts/LoxoHolders.sol:LoxoHolders");
+  // const LoxoHolders = await LoxoHoldersContract.deploy(2000, '1000000000000000000');
 
-  await LoxoHolders.deployed();
+  // await LoxoHolders.deployed();
 
-  console.log("LoxHolders address:", LoxoHolders.address);
+  // console.log("LoxHolders address:", LoxoHolders.address);
 
   // WIOTX need to be updated and use the right address in the mainnet
   const WIOTX= '0x87B873224EaD2a8cbBB7CfB39b18a795e7DA8CC7' // Wrapped IoTeX(WIOTX) deployed in the testnet
 
-  data = await ethers.getContractFactory("MasterChef");
-  MasterChef = await data.deploy(WIOTX, LoxoHolders.address);
-  txDeployed = await MasterChef.deployed();
-  console.log("Masterchef: ", MasterChef.address)
+  // data = await ethers.getContractFactory("MasterChef");
+  // MasterChef = await data.deploy(WIOTX, LoxoHolders.address);
+  // txDeployed = await MasterChef.deployed();
+  // console.log("Masterchef: ", MasterChef.address)
 
-  data = await ethers.getContractFactory("Royalties");
-  Royalties = await data.deploy(WIOTX, LoxoHolders.address);
-  txDeployed = await Royalties.deployed();
-  console.log("Royalties: ", Royalties.address)
+  // data = await ethers.getContractFactory("Royalties");
+  // Royalties = await data.deploy(WIOTX, LoxoHolders.address);
+  // txDeployed = await Royalties.deployed();
+  // console.log("Royalties: ", Royalties.address)
 
 
 // Loxodrome contracts 
@@ -51,7 +51,7 @@ async function main () {
   txDeployed = await veLoxo.deployed();
   console.log("veLoxo Address: ", veLoxo.address)
 
-  const veLoxoAd = veLoxo.address
+   const veLoxoAd = veLoxo.address
   
   data = await ethers.getContractFactory("RewardsDistributor");
   RewardsDistributor = await data.deploy(veLoxoAd);
@@ -76,13 +76,13 @@ async function main () {
   //Step 2
 
   
-
   const pairFactoryAd =	pairFactory.address
   const gaugeFactoryAd = gaugeFactory.address
   const bribeFactoryAd = bribeFactory.address
 
-  data = await ethers.getContractFactory("Voter");
-  Voter = await data.deploy(veLoxoAd, pairFactoryAd, gaugeFactoryAd, bribeFactoryAd);
+
+  data = await ethers.getContractFactory("VoterV2");
+  Voter = await data.deploy();
   txDeployed = await Voter.deployed();
   console.log("Voter: ", Voter.address)
 
@@ -106,6 +106,16 @@ async function main () {
 
   txDeployed = await router.deployed();
   console.log("router: ", router.address)
+
+  data = await ethers.getContractFactory("AirdropClaimLoxNFT");
+  airdropLoxNFT = await data.deploy(Loxo.address, veLoxoAd);
+  txDeployed = await airdropLoxNFT.deployed();
+  console.log("airdropLoxNFT: ", airdropLoxNFT.address)
+
+  data = await ethers.getContractFactory("MerkleTreeLoxNFT");
+  merkleTreeTHENFT = await data.deploy(airdropLoxNFT.address);
+  txDeployed = await merkleTreeTHENFT.deployed();
+  console.log("MerkleTreeTHENFT: ", merkleTreeTHENFT.address)
 }
 
 main()
