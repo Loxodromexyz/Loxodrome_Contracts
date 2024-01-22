@@ -25,7 +25,7 @@ contract VoterV2 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     address internal base;
     address public gaugefactory;
     address public bribefactory;
-    uint internal constant DURATION = 7 days; // rewards are released over 7 days
+    uint internal constant DURATION = 2 days; // rewards are released over 7 days
     address public minter;
     address public governor; // should be set to an IGovernor
     address public emergencyCouncil; // credibly neutral party similar to Curve's Emergency DAO

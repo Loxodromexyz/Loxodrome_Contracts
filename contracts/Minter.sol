@@ -18,12 +18,15 @@ contract Minter is IMinter {
     uint internal EMISSION = 990;
     // TODO: Emission decay is 1% or 990/1000 or 99% of total weekly distribution
     uint internal constant TAIL_EMISSION = 2;
-    uint internal REBASEMAX = 300;
+    uint internal REBASEMAX = 100;
+    uint internal NFTStakerMAX = 50;
+    uint internal TradersMAX = 40;
+    
     uint internal constant PRECISION = 1000;
     uint public teamRate;
     uint public constant MAX_TEAM_RATE = 50; // 5%
 
-    uint internal constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
+    uint internal constant WEEK = 86400 * 2; // allows minting once per week (reset every Thursday 00:00 UTC)
     // TODO: weekly emission is 10M
     uint public weekly = 2_400_000 * 1e18; // represents a starting weekly emission of 2.6M Loxo (Loxo has 18 decimals)
     uint public active_period;
@@ -32,6 +35,8 @@ contract Minter is IMinter {
     address internal initializer;
     address public team;
     address public pendingTeam;
+    address public _NFTstakers_rewards;
+    address public _Traders_rewards;
     
     ILoxo public immutable _Loxo;
     IVoter public _voter;
@@ -43,7 +48,9 @@ contract Minter is IMinter {
     constructor(
         address __voter, // the voting & distribution system
         address __ve, // the ve(3,3) system that will be locked into
-        address __rewards_distributor // the distribution system that ensures users aren't diluted
+        address __rewards_distributor, // the distribution system that ensures users aren't diluted
+        address __NFTstakers_rewards,
+        address __Traders_rewards
     ) {
         initializer = msg.sender;
         team = msg.sender;
@@ -52,6 +59,8 @@ contract Minter is IMinter {
         _Loxo = ILoxo(IVotingEscrow(__ve).token());
         _voter = IVoter(__voter);
         _ve = IVotingEscrow(__ve);
+        _NFTstakers_rewards = __NFTstakers_rewards;
+        _Traders_rewards = __Traders_rewards;
         _rewards_distributor = IRewardsDistributor(__rewards_distributor);
         active_period = ((block.timestamp + (2 * WEEK)) / WEEK) * WEEK;
         isFirstMint = true;
@@ -109,7 +118,17 @@ contract Minter is IMinter {
         require(_rebase <= PRECISION, "rate too high");
         REBASEMAX = _rebase;
     }
+    function setNFTStaker(uint _NFTStakersReward) external {
+        require(msg.sender == team, "not team");
+        require(_NFTStakersReward <= PRECISION, "rate too high");
+        NFTStakerMAX = _NFTStakersReward;
+    }
 
+    function setTradersMAX(uint _TradersReward) external {
+        require(msg.sender == team, "not team");
+        require(_TradersReward <= PRECISION, "rate too high");
+        TradersMAX = _TradersReward;
+    }
     // calculate circulating supply as total token supply - locked supply
     function circulating_supply() public view returns (uint) {
         return _Loxo.totalSupply() - _ve.supply();
@@ -149,7 +168,31 @@ contract Minter is IMinter {
             return _weeklyMint * lockedShare / PRECISION;
         }
     }
+    function calculate_NFT_Staker_Reward(uint _weeklyMint) public view returns (uint) {
+        // TODO: NFT staker reward is 5%
+        uint _veTotal = _ve.supply();
+        uint _LoxoTotal = _Loxo.totalSupply();
+        
+        uint lockedShare = (_veTotal) * PRECISION  / _LoxoTotal;
+        if(lockedShare >= NFTStakerMAX){
+            return _weeklyMint * NFTStakerMAX / PRECISION;
+        } else {
+            return _weeklyMint * lockedShare / PRECISION;
+        }
+    }
 
+    function calculate_Traders_Reward(uint _weeklyMint) public view returns (uint) {
+        // TODO: NFT staker reward is 4%
+        uint _veTotal = _ve.supply();
+        uint _LoxoTotal = _Loxo.totalSupply();
+        
+        uint lockedShare = (_veTotal) * PRECISION  / _LoxoTotal;
+        if(lockedShare >= TradersMAX){
+            return _weeklyMint * TradersMAX / PRECISION;
+        } else {
+            return _weeklyMint * lockedShare / PRECISION;
+        }
+    }
     // update period can only be called once per cycle (1 week)
     function update_period() external returns (uint) {
         uint _period = active_period;
@@ -165,10 +208,12 @@ contract Minter is IMinter {
             }
 
             uint _rebase = calculate_rebase(weekly);
+            uint _nftStakers = calculate_NFT_Staker_Reward(weekly);
+            uint _traders = calculate_Traders_Reward(weekly);
             uint _teamEmissions = weekly * teamRate / PRECISION;
             uint _required = weekly;
 
-            uint _voterAmount = weekly - _rebase - _teamEmissions;
+            uint _voterAmount = weekly - _rebase - _nftStakers - _traders - _teamEmissions;
 
             uint _balanceOf = _Loxo.balanceOf(address(this));
             if (_balanceOf < _required) {
@@ -176,7 +221,8 @@ contract Minter is IMinter {
             }
 
             require(_Loxo.transfer(team, _teamEmissions));
-            
+            require(_Loxo.transfer(address(_NFTstakers_rewards), _nftStakers));
+            require(_Loxo.transfer(address(_Traders_rewards), _traders));
             require(_Loxo.transfer(address(_rewards_distributor), _rebase));
             _rewards_distributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
             _rewards_distributor.checkpoint_total_supply(); // checkpoint supply

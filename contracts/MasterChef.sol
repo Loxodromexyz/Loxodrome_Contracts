@@ -16,18 +16,23 @@ contract MasterChef is Ownable {
 
     struct UserInfo {
         uint256 amount;
+        int256 rewardDebtWIOTX;
+        int256 rewardDebtLOXO;
         int256 rewardDebt;
         uint256[] tokenIds;
         mapping(uint256 => uint256) tokenIndices;
     }
 
     struct PoolInfo {
-        uint256 accRewardPerShare;
+        uint256 accRewardPerShareWIOTX;
+        uint256 accRewardPerShareLOXO;
         uint256 lastRewardTime;
     }
 
-    /// @notice Address of WBNB contract.
-    IERC20 public WBNB;
+    /// @notice Address of WIOTX contract.
+    IERC20 public WIOTX;
+     /// @notice Address of LOXO contract.
+    IERC20 public LOXO;
     /// @notice Address of the NFT token for each MCV2 pool.
     IERC721 public NFT;
 
@@ -44,20 +49,25 @@ contract MasterChef is Ownable {
     mapping(address => bool) public isKeeper;
 
     uint256 public rewardPerSecond;
-    uint256 private ACC_WBNB_PRECISION;
+    uint256 public rewardPerSecondLOXO;
+    uint256 private ACC_WIOTX_PRECISION;
 
     uint256 public distributePeriod;
     uint256 public lastDistributedTime;
 
     event Deposit(address indexed user, uint256 amount, address indexed to);
     event Withdraw(address indexed user, uint256 amount, address indexed to);
-    event Harvest(address indexed user, uint256 amount);
+    event Harvest(address indexed user, uint256 pendingWIOTX, uint256 pendingLOXO);
     event LogUpdatePool(
         uint256 lastRewardTime,
         uint256 nftSupply,
-        uint256 accRewardPerShare
+        uint256 rewardPerSecondWIOTX,
+        uint256 rewardPerSecondLOXO 
     );
-    event LogRewardPerSecond(uint256 rewardPerSecond);
+    event LogRewardPerSecond(
+        uint256 rewardPerSecondWIOTX, 
+        uint256 rewardPerSecondLOXO 
+    );
 
 
     modifier onlyKeeper {
@@ -65,14 +75,16 @@ contract MasterChef is Ownable {
         _;
     }
 
-    constructor(IERC20 _WBNB, IERC721 _NFT) {
-        WBNB = _WBNB;
+    constructor(IERC20 _WIOTX, IERC20 _LOXO, IERC721 _NFT) {
+        WIOTX = _WIOTX;
+        LOXO = _LOXO;
         NFT = _NFT;
         distributePeriod = 1 weeks;
-        ACC_WBNB_PRECISION = 1e12;
+        ACC_WIOTX_PRECISION = 1e12;
         poolInfo = PoolInfo({
             lastRewardTime: block.timestamp,
-            accRewardPerShare: 0
+            accRewardPerShareWIOTX: 0,
+            accRewardPerShareLOXO:0
         });
     }
 
@@ -105,13 +117,15 @@ contract MasterChef is Ownable {
 
     /// @notice Sets the reward per second to be distributed. Can only be called by the owner.
     /// @param _rewardPerSecond The amount of Reward to be distributed per second.
-    function setRewardPerSecond(uint256 _rewardPerSecond) public onlyOwner {
+    function setRewardPerSecond(uint256 _rewardPerSecond, uint256 _rewardPerSecondNewToken) public onlyOwner {
         updatePool();
         rewardPerSecond = _rewardPerSecond;
-        emit LogRewardPerSecond(_rewardPerSecond);
+        rewardPerSecondLOXO = _rewardPerSecondNewToken; // Add this line
+        emit LogRewardPerSecond(_rewardPerSecond, _rewardPerSecondNewToken);
     }
+    
 
-    function setDistributionRate(uint256 amount) public onlyKeeper {
+    function setDistributionRate(uint256 amount, uint256 amountLOXO) public onlyKeeper {
         updatePool();
         uint256 notDistributed;
         if (lastDistributedTime > 0 && block.timestamp < lastDistributedTime) {
@@ -123,31 +137,47 @@ contract MasterChef is Ownable {
         uint256 _rewardPerSecond = amount.div(distributePeriod);
         rewardPerSecond = _rewardPerSecond;
         lastDistributedTime = block.timestamp.add(distributePeriod);
-        emit LogRewardPerSecond(_rewardPerSecond);
+        amountLOXO = amountLOXO.add(notDistributed);
+        uint256 _rewardPerSecondLOXO = amountLOXO.div(distributePeriod);
+        rewardPerSecondLOXO = _rewardPerSecondLOXO;
+        emit LogRewardPerSecond(_rewardPerSecond, _rewardPerSecondLOXO);
     }
 
-    /// @notice View function to see pending WBNB on frontend.
+    /// @notice View function to see pending WIOTX and LOXO on frontend.
     /// @param _user Address of user.
-    /// @return pending WBNB reward for a given user.
+    /// @return pendingWIOTX and pendingLOXO for a given user.
     function pendingReward(address _user)
         external
         view
-        returns (uint256 pending)
+        returns (uint256 pendingWIOTX, uint256 pendingLOXO)
     {
         PoolInfo memory pool = poolInfo;
         UserInfo storage user = userInfo[_user];
-        uint256 accRewardPerShare = pool.accRewardPerShare;
         uint256 nftSupply = NFT.balanceOf(address(this));
+
+        uint256 accRewardPerShareWIOTX = pool.accRewardPerShareWIOTX;
+        uint256 accRewardPerShareLOXO = pool.accRewardPerShareLOXO;
+
         if (block.timestamp > pool.lastRewardTime && nftSupply != 0) {
-            uint256 time = block.timestamp.sub(pool.lastRewardTime);
-            uint256 reward = time.mul(rewardPerSecond);
-            accRewardPerShare = accRewardPerShare.add(
-                reward.mul(ACC_WBNB_PRECISION) / nftSupply
+            uint256 timeElapsed = block.timestamp.sub(pool.lastRewardTime);
+            uint256 rewardWIOTX = timeElapsed.mul(rewardPerSecond);
+            uint256 rewardLOXO = timeElapsed.mul(rewardPerSecondLOXO);
+
+            accRewardPerShareWIOTX = accRewardPerShareWIOTX.add(
+                rewardWIOTX.mul(ACC_WIOTX_PRECISION) / nftSupply
+            );
+            accRewardPerShareLOXO = accRewardPerShareLOXO.add(
+                rewardLOXO.mul(ACC_WIOTX_PRECISION) / nftSupply
             );
         }
-        pending = int256(
-            user.amount.mul(accRewardPerShare) / ACC_WBNB_PRECISION
-        ).sub(user.rewardDebt).toUInt256();
+
+        pendingWIOTX = int256(
+            user.amount.mul(accRewardPerShareWIOTX) / ACC_WIOTX_PRECISION
+        ).sub(user.rewardDebtWIOTX).toUInt256();
+
+        pendingLOXO = int256(
+            user.amount.mul(accRewardPerShareLOXO) / ACC_WIOTX_PRECISION
+        ).sub(user.rewardDebtLOXO).toUInt256();
     }
 
     /// @notice View function to see token Ids on frontend.
@@ -168,23 +198,25 @@ contract MasterChef is Ownable {
         if (block.timestamp > pool.lastRewardTime) {
             uint256 nftSupply = NFT.balanceOf(address(this));
             if (nftSupply > 0) {
-                uint256 time = block.timestamp.sub(pool.lastRewardTime);
-                uint256 reward = time.mul(rewardPerSecond);
-                pool.accRewardPerShare = pool.accRewardPerShare.add(
-                    reward.mul(ACC_WBNB_PRECISION).div(nftSupply)
-                );
+                uint256 timeElapsed = block.timestamp.sub(pool.lastRewardTime);
+                uint256 rewardWIOTX = timeElapsed.mul(rewardPerSecond);
+                uint256 rewardLOXO = timeElapsed.mul(rewardPerSecondLOXO);
+
+                pool.accRewardPerShareWIOTX = pool.accRewardPerShareWIOTX.add(rewardWIOTX.mul(ACC_WIOTX_PRECISION).div(nftSupply));
+                pool.accRewardPerShareLOXO = pool.accRewardPerShareLOXO.add(rewardLOXO.mul(ACC_WIOTX_PRECISION).div(nftSupply));
             }
             pool.lastRewardTime = block.timestamp;
             poolInfo = pool;
             emit LogUpdatePool(
                 pool.lastRewardTime,
                 nftSupply,
-                pool.accRewardPerShare
+                pool.accRewardPerShareWIOTX,
+                pool.accRewardPerShareLOXO
             );
         }
     }
 
-    /// @notice Deposit nft tokens to MCV2 for WBNB allocation.
+    /// @notice Deposit nft tokens to MCV2 for WIOTX allocation.
     /// @param tokenIds NFT tokenIds to deposit.
     function deposit(uint256[] calldata tokenIds) public {
         PoolInfo memory pool = updatePool();
@@ -192,8 +224,10 @@ contract MasterChef is Ownable {
 
         // Effects
         user.amount = user.amount.add(tokenIds.length);
-        user.rewardDebt = user.rewardDebt.add( int256(tokenIds.length.mul(pool.accRewardPerShare) / ACC_WBNB_PRECISION) );
-
+            user.rewardDebtWIOTX = user.rewardDebtWIOTX.add(int256(tokenIds.length.mul(pool.accRewardPerShareWIOTX) / ACC_WIOTX_PRECISION)
+            );
+            user.rewardDebtLOXO = user.rewardDebtLOXO.add(int256(tokenIds.length.mul(pool.accRewardPerShareLOXO) / ACC_WIOTX_PRECISION)
+            );
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(NFT.ownerOf(tokenIds[i]) == msg.sender, "This NTF does not belong to address");
 
@@ -214,10 +248,11 @@ contract MasterChef is Ownable {
         UserInfo storage user = userInfo[msg.sender];
 
         // Effects
-        user.rewardDebt = user.rewardDebt.sub(
-            int256(
-                tokenIds.length.mul(pool.accRewardPerShare) / ACC_WBNB_PRECISION
-            )
+        user.rewardDebtWIOTX = user.rewardDebtWIOTX.sub(
+        int256(tokenIds.length.mul(pool.accRewardPerShareWIOTX) / ACC_WIOTX_PRECISION)
+        );
+        user.rewardDebtLOXO = user.rewardDebtLOXO.sub(
+            int256(tokenIds.length.mul(pool.accRewardPerShareLOXO) / ACC_WIOTX_PRECISION)
         );
         user.amount = user.amount.sub(tokenIds.length);
 
@@ -242,22 +277,26 @@ contract MasterChef is Ownable {
     function harvest() public {
         PoolInfo memory pool = updatePool();
         UserInfo storage user = userInfo[msg.sender];
-        int256 accumulatedReward = int256(
-            user.amount.mul(pool.accRewardPerShare) / ACC_WBNB_PRECISION
-        );
-        uint256 _pendingReward = accumulatedReward
-            .sub(user.rewardDebt)
-            .toUInt256();
+        int256 accumulatedWIOTX = int256(user.amount.mul(pool.accRewardPerShareWIOTX) / ACC_WIOTX_PRECISION);
+        int256 accumulatedLOXO = int256(user.amount.mul(pool.accRewardPerShareLOXO) / ACC_WIOTX_PRECISION);
 
-        // Effects
-        user.rewardDebt = accumulatedReward;
+        uint256 pendingWIOTX = accumulatedWIOTX.sub(user.rewardDebtWIOTX).toUInt256();
+        uint256 pendingLOXO = accumulatedLOXO.sub(user.rewardDebtLOXO).toUInt256();
 
-        // Interactions
-        if (_pendingReward != 0) {
-            WBNB.safeTransfer(msg.sender, _pendingReward);
+        // Update user rewards debt
+        user.rewardDebtWIOTX = accumulatedWIOTX;
+        user.rewardDebtLOXO = accumulatedLOXO;
+
+        // Transfer rewards
+        if (pendingWIOTX > 0) {
+            WIOTX.safeTransfer(msg.sender, pendingWIOTX);
+        }
+        if (pendingLOXO > 0) {
+            LOXO.safeTransfer(msg.sender, pendingLOXO);
         }
 
-        emit Harvest(msg.sender, _pendingReward);
+        emit Harvest(msg.sender, pendingWIOTX, pendingLOXO); // Update event accordingly
+
     }
 
     function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {

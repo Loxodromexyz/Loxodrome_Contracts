@@ -1,24 +1,28 @@
 deploy:
- 
-`npx hardhat run --network IoTex_testnet scripts/deployAll.js `
+- ECHO 
+- VeArtProxy
+- VotingEscrow
+- RewardsDistributor
+- BribeFactory
+-  WrappedExternalBribeFactory
+- PairFactory
+- GaugeFactory
+- Voter
+- Minter
+- Router
+- EpochController
+- pairApi
+- veNFTAPI
 
- deployed API contract and lib
-
- `npx hardhat run --network IoTex_testnet scripts/deployAPI.js` 
-
- 
-
-contracts parameters:
-function | contract | input value 
-___________________________________
+parameters
 Set Dibs (PairFactory) input (owner address)
 Set staking Fee (PairFactory) input (owner address)
-Initialize (voter) input (LOXO address, minter address)
-InitialMint (LOXO) input (team address) 
-initialize (Voter)  input (["LOXO address"], Minter address)
+initialize (voter) input (veloxo, factory, gauge, bribe)
+Initialize (voter) input (echo address, minter address)
+Initial Mint (Echo) input (50 000 000)
 Whitelist (voter) input (token address)
-set Minter (Echo) input (minter address)
-Initialize (Minter) input (address[] claimants,uint256[] amounts,uint256 max) // airdrop for protocols 
+set Minter (LOXO) input (minter address)
+Initialize (Minter) input (address[] claimants,uint256[] amounts,uint256 max)
 Set Depositor (rewarddistribution) input (minter address)
 
 ["0xFF3Befb9B3146e4AdD3D32aDaB37A8426fAE525A","0x9Ef4b0B3087a8b2D9f3a78E6cA81a8bF73DD0097","0x273321eEd515AAD1AE0B6a985875839BBDCaFAE4","0x69F3bBFc6a35f3767cf1652BCf8Ee4c3e000c0BA","0x5CD84D6d33138EADbE25898130e809204031AE44","0xf3A33C4D56B5F551364aD7925Ca652941cd112EC","0xd88FD3C955CAcff1037077d12a69AC3f3bd09672","0xd06b0cD741932D36Ce431bD997b40Da826fDc1F8","0x2df3aBA5BF2EF7de4b6Fc2035de5cf6b3042eABA","0xaf21Fe4cDD2645ad09c82ff968F02b15331a6A95","0x9162C389a63334B060cb3fDDEafA0C863C42FdBd"]
