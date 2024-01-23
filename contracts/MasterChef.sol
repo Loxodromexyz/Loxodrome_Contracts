@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./libraries/SignedSafeMath.sol";
+import "./interfaces/IVotingEscrow.sol";
+import "./interfaces/ILoxo.sol";
 
 contract MasterChef is Ownable {
     using SafeMath for uint256;
@@ -28,11 +30,15 @@ contract MasterChef is Ownable {
         uint256 accRewardPerShareLOXO;
         uint256 lastRewardTime;
     }
+    /// @notice lock period is set to 2 years.
+    uint internal constant LOCK = 86400 * 7 * 52 * 2;
+    
+    uint internal LIMIT = 10 * 1e18;
+    uint internal RATIO = 500;// 5%
+    uint internal constant PRECISION = 1000;
 
     /// @notice Address of WIOTX contract.
     IERC20 public WIOTX;
-     /// @notice Address of LOXO contract.
-    IERC20 public LOXO;
     /// @notice Address of the NFT token for each MCV2 pool.
     IERC721 public NFT;
 
@@ -52,6 +58,10 @@ contract MasterChef is Ownable {
     uint256 public rewardPerSecondLOXO;
     uint256 private ACC_WIOTX_PRECISION;
 
+    // 
+    ILoxo public immutable LOXO;
+    IVotingEscrow public immutable _ve;
+
     uint256 public distributePeriod;
     uint256 public lastDistributedTime;
 
@@ -68,6 +78,9 @@ contract MasterChef is Ownable {
         uint256 rewardPerSecondWIOTX, 
         uint256 rewardPerSecondLOXO 
     );
+    event LogLimit(
+        uint256 limitToLock
+    );
 
 
     modifier onlyKeeper {
@@ -75,9 +88,15 @@ contract MasterChef is Ownable {
         _;
     }
 
-    constructor(IERC20 _WIOTX, IERC20 _LOXO, IERC721 _NFT) {
+    constructor(
+        IERC20 _WIOTX,
+        address __ve, // the ve(3,3) system that will be locked into
+        IERC721 _NFT
+        ) {
+        
         WIOTX = _WIOTX;
-        LOXO = _LOXO;
+        LOXO = ILoxo(IVotingEscrow(__ve).token());
+        _ve = IVotingEscrow(__ve);
         NFT = _NFT;
         distributePeriod = 1 weeks;
         ACC_WIOTX_PRECISION = 1e12;
@@ -124,6 +143,10 @@ contract MasterChef is Ownable {
         emit LogRewardPerSecond(_rewardPerSecond, _rewardPerSecondNewToken);
     }
     
+    function setLimit(uint _limitToLock) public onlyOwner {
+        LIMIT = _limitToLock;
+        emit LogLimit(_limitToLock);
+    }
 
     function setDistributionRate(uint256 amount, uint256 amountLOXO) public onlyKeeper {
         updatePool();
@@ -292,7 +315,14 @@ contract MasterChef is Ownable {
             WIOTX.safeTransfer(msg.sender, pendingWIOTX);
         }
         if (pendingLOXO > 0) {
-            LOXO.safeTransfer(msg.sender, pendingLOXO);
+            if(pendingLOXO > LIMIT){
+                LOXO.approve(address(_ve), pendingLOXO);
+                _ve.create_lock_for((pendingLOXO.mul(RATIO) / PRECISION), LOCK, msg.sender);
+                LOXO.transfer(msg.sender, (pendingLOXO.mul(1000 - RATIO) / PRECISION));
+            }else {
+                LOXO.transfer(msg.sender, pendingLOXO);
+            }
+         
         }
 
         emit Harvest(msg.sender, pendingWIOTX, pendingLOXO); // Update event accordingly

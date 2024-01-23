@@ -1,3 +1,8 @@
+
+run 
+
+`npx hardhat run --network IoTex_testnet scripts/deployAll.js`
+
 deploy:
 - ECHO 
 - VeArtProxy

@@ -97,7 +97,7 @@ async function main () {
   // console.log("LoxHolders address:", LoxoHolders.address);
   
   data = await ethers.getContractFactory("MasterChef");
-  MasterChef = await data.deploy(WIOTX, Loxo.address, "0xc5be08D76b0aA4D4F6857436F3471E6483B0b61b"); //LoxoHolders.address
+  MasterChef = await data.deploy(WIOTX, veLoxoAd, "0xc5be08D76b0aA4D4F6857436F3471E6483B0b61b"); //LoxoHolders.address
   txDeployed = await MasterChef.deployed();
   console.log("Masterchef: ", MasterChef.address)
 
@@ -113,15 +113,15 @@ async function main () {
   txDeployed = await Minter.deployed();
   console.log("Minter: ", Minter.address)
 
-  data = await ethers.getContractFactory("AirdropClaimLoxNFT");
-  airdropLoxNFT = await data.deploy(Loxo.address, veLoxoAd);
-  txDeployed = await airdropLoxNFT.deployed();
-  console.log("airdropLoxNFT: ", airdropLoxNFT.address)
+  // data = await ethers.getContractFactory("AirdropClaimLoxNFT");
+  // airdropLoxNFT = await data.deploy(Loxo.address, veLoxoAd);
+  // txDeployed = await airdropLoxNFT.deployed();
+  // console.log("airdropLoxNFT: ", airdropLoxNFT.address)
 
-  data = await ethers.getContractFactory("MerkleTreeLoxNFT");
-  merkleTreeTHENFT = await data.deploy(airdropLoxNFT.address);
-  txDeployed = await merkleTreeTHENFT.deployed();
-  console.log("MerkleTreeTHENFT: ", merkleTreeTHENFT.address)
+  // data = await ethers.getContractFactory("MerkleTreeLoxNFT");
+  // merkleTreeTHENFT = await data.deploy(airdropLoxNFT.address);
+  // txDeployed = await merkleTreeTHENFT.deployed();
+  // console.log("MerkleTreeTHENFT: ", merkleTreeTHENFT.address)
 }
 
 main()

@@ -18,9 +18,9 @@ contract Minter is IMinter {
     uint internal EMISSION = 990;
     // TODO: Emission decay is 1% or 990/1000 or 99% of total weekly distribution
     uint internal constant TAIL_EMISSION = 2;
-    uint internal REBASEMAX = 100;
-    uint internal NFTStakerMAX = 50;
-    uint internal TradersMAX = 40;
+    uint internal REBASEMAX = 100; // 10%
+    uint internal NFTStakerMAX = 50; // 5%
+    uint internal TradersMAX = 40; // 4% 
     
     uint internal constant PRECISION = 1000;
     uint public teamRate;
@@ -28,7 +28,7 @@ contract Minter is IMinter {
 
     uint internal constant WEEK = 86400 * 2; // allows minting once per week (reset every Thursday 00:00 UTC)
     // TODO: weekly emission is 10M
-    uint public weekly = 2_400_000 * 1e18; // represents a starting weekly emission of 2.6M Loxo (Loxo has 18 decimals)
+    uint public weekly = 375_000 * 1e18; // represents a starting weekly emission of 2.6M Loxo (Loxo has 18 decimals)
     uint public active_period;
     uint internal constant LOCK = 86400 * 7 * 52 * 2;
 
@@ -54,8 +54,8 @@ contract Minter is IMinter {
     ) {
         initializer = msg.sender;
         team = msg.sender;
-        // TODO: Team rate is 5% and will be decreased in the future to 3%
-        teamRate = 50; // 300 bps = 5%
+        // TODO: Team rate is 1% and will be increased in the future to 3%
+        teamRate = 10; // 300 bps = 1%
         _Loxo = ILoxo(IVotingEscrow(__ve).token());
         _voter = IVoter(__voter);
         _ve = IVotingEscrow(__ve);
