@@ -10,11 +10,15 @@ async function main () {
 
   console.log('Deploying Contract...');
 
-  data = await ethers.getContractFactory("StakingNFTFeeConverter");
-  StakingNFTFeeConverter = await data.deploy();
+  StakingNFT = await ethers.getContractFactory("StakingNFTFeeConverter");
+  StakingNFTFeeConverter = await StakingNFT.deploy();
   txDeployed = await StakingNFTFeeConverter.deployed();
   console.log("StakingNFTFeeConverter: ", StakingNFTFeeConverter.address)  
 
+  NFTSales = await ethers.getContractFactory("NFTSalesSplitter");
+  NFTSalesSplitter = await NFTSales.deploy();
+  txDeployed = await NFTSalesSplitter.deployed();
+  console.log("NFTSalesSplitter: ", NFTSalesSplitter.address)  
 
 
 

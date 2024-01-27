@@ -14,7 +14,7 @@ contract PairFactory is IPairFactory {
     uint256 public volatileFee;
     uint256 public stakingNFTFee;
     uint256 public MAX_REFERRAL_FEE = 1200; // 12%
-    uint256 public constant MAX_FEE = 25; // 0.25%
+    uint256 public constant MAX_FEE = 50; // 0.5%
 
     address public feeManager;
     address public pendingFeeManager;
@@ -35,8 +35,8 @@ contract PairFactory is IPairFactory {
         pauser = msg.sender;
         isPaused = false;
         feeManager = msg.sender;
-        stableFee = 5; // 0.05%
-        volatileFee = 10; // 0.10%
+        stableFee = 20; // 0.20%
+        volatileFee = 50; // 0.50%
         stakingNFTFee = 3000; // 30% of stable/volatileFee
     }
 

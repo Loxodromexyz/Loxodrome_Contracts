@@ -5,11 +5,10 @@ import './interfaces/IERC20.sol';
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
-
 interface IRoyalties{
     function deposit(uint256 amount) external;
 }
-interface IWBNB{
+interface IWIOTX{
      function deposit() external payable ;
 }
 
@@ -22,12 +21,12 @@ interface IStakingNFTConverter {
 contract NFTSalesSplitter is OwnableUpgradeable  {
 
     uint256 constant public PRECISION = 1000;
-    uint256 constant public WEEK = 86400 * 7;
+    uint256 constant public WEEK = 86400 * 2;
     uint256 public converterFee;
     uint256 public royaltiesFee;
     
 
-    address public wbnb;
+    address public wIOTX;
     
     address public stakingConverter;
     address public royalties;
@@ -47,28 +46,28 @@ contract NFTSalesSplitter is OwnableUpgradeable  {
 
     function initialize() initializer  public {
         __Ownable_init();
-        wbnb = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
-        stakingConverter = address(0x14cBeee51410c4e3B8269B534933404AEE416A96);
-        royalties = address(0xbe3B34b69b9d7a4A919A7b7da1ae34061e46c49D);
+        wIOTX = 0x87B873224EaD2a8cbBB7CfB39b18a795e7DA8CC7;
+        stakingConverter = address(0xDC259a3ab993d29c9584e5AA85463E00117b88A4);
+        royalties = address(0x5b6af9BB85c510411BaBD6EacC9c72892C3B894b);
         converterFee = 333;
         royaltiesFee = 667;
 
     }
 
-    function swapWBNBToBNB() public onlyAllowed {
-        _swapWBNBToBNB();
+    function swapWIOTXToIOTX() public onlyAllowed {
+        _swapWIOTXToIOTX();
     }
 
-    function _swapWBNBToBNB() internal {
+    function _swapWIOTXToIOTX() internal {
         if(address(this).balance > 0){
-            IWBNB(wbnb).deposit{value: address(this).balance}();
+            IWIOTX(wIOTX).deposit{value: address(this).balance}();
         }
     }
 
     function split() public onlyAllowed {
         
-        // convert bnb to wbnb, easier to handle
-        _swapWBNBToBNB();
+        // convert IOTX to wIOTX, easier to handle
+        _swapWIOTXToIOTX();
 
         uint256 balance = balanceOf();
         uint256 stakingAmount = 0;
@@ -77,7 +76,7 @@ contract NFTSalesSplitter is OwnableUpgradeable  {
         if(balance > 1000){
             if(stakingConverter != address(0)){
                 stakingAmount = balance * converterFee / PRECISION;
-                IERC20(wbnb).transfer(stakingConverter, stakingAmount);
+                IERC20(wIOTX).transfer(stakingConverter, stakingAmount);
                 IStakingNFTConverter(stakingConverter).claimFees();
                 IStakingNFTConverter(stakingConverter).swap();
             }
@@ -88,8 +87,8 @@ contract NFTSalesSplitter is OwnableUpgradeable  {
                 if(balanceOf() < royaltiesAmount){
                     royaltiesAmount = balanceOf();
                 }
-                IERC20(wbnb).approve(royalties, 0);
-                IERC20(wbnb).approve(royalties, royaltiesAmount);
+                IERC20(wIOTX).approve(royalties, 0);
+                IERC20(wIOTX).approve(royalties, royaltiesAmount);
                 IRoyalties(royalties).deposit(royaltiesAmount);
             }   
             emit Split(timestamp, stakingAmount, royaltiesAmount);
@@ -100,7 +99,7 @@ contract NFTSalesSplitter is OwnableUpgradeable  {
     }
 
     function balanceOf() public view returns(uint){
-        return IERC20(wbnb).balanceOf(address(this));
+        return IERC20(wIOTX).balanceOf(address(this));
     }
 
     function setConverter(address _converter) external onlyOwner {

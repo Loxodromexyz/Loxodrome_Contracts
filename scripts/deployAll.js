@@ -89,20 +89,20 @@ async function main () {
 
  // step 0 deploy NFT contract 
 
-  // const LoxoHoldersContract = await ethers.getContractFactory("contracts/LoxoHolders.sol:LoxoHolders");
-  // const LoxoHolders = await LoxoHoldersContract.deploy(2000, '1000000000000000000');
+  const LoxoHoldersContract = await ethers.getContractFactory("contracts/LoxoHolders.sol:LoxoHolders");
+  const LoxoHolders = await LoxoHoldersContract.deploy(5000, '1000000000000000000');
 
-  // await LoxoHolders.deployed();
+  await LoxoHolders.deployed();
 
-  // console.log("LoxHolders address:", LoxoHolders.address);
+  console.log("LoxHolders address:", LoxoHolders.address);
   
   data = await ethers.getContractFactory("MasterChef");
-  MasterChef = await data.deploy(WIOTX, veLoxoAd, "0xc5be08D76b0aA4D4F6857436F3471E6483B0b61b"); //LoxoHolders.address
+  MasterChef = await data.deploy(WIOTX, veLoxoAd, LoxoHolders.address); //LoxoHolders.address
   txDeployed = await MasterChef.deployed();
   console.log("Masterchef: ", MasterChef.address)
 
   data = await ethers.getContractFactory("Royalties");
-  Royalties = await data.deploy(WIOTX, "0xc5be08D76b0aA4D4F6857436F3471E6483B0b61b"); //LoxoHolders.address
+  Royalties = await data.deploy(WIOTX, LoxoHolders.address); //LoxoHolders.address
   txDeployed = await Royalties.deployed();
   console.log("Royalties: ", Royalties.address)
 

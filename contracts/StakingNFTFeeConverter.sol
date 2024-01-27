@@ -23,7 +23,7 @@ contract StakingNFTFeeConverter  {
     uint256 public lastRewardtime;
 
     address public masterchef;
-    address public wbnb;
+    address public wIOTX;
     address public owner;
     address public router;
     address public pairFactory;
@@ -36,7 +36,7 @@ contract StakingNFTFeeConverter  {
     mapping(address => IRouter01.route) public tokenToRoutes;
     mapping(address => bool) public isKeeper;
 
-    event StakingReward(uint256 _timestamp, uint256 _wbnbAmount);
+    event StakingReward(uint256 _timestamp, uint256 _wIOTXAmount);
     event TransferOwnership(address oldOwner, address newOwner);
     event ClaimFee(address indexed _pair, uint256 timestamp);
     event ClaimFeeError(address indexed _pair, uint256 timestamp);
@@ -56,7 +56,7 @@ contract StakingNFTFeeConverter  {
     constructor() {
         owner = msg.sender;
         lastRewardtime = 0;
-        wbnb = 0xb6425DD43801E2b759BE2CAA2f642Ab5460FBAD6;
+        wIOTX = 0x87B873224EaD2a8cbBB7CfB39b18a795e7DA8CC7;
     }
 
 
@@ -96,8 +96,8 @@ contract StakingNFTFeeConverter  {
 
     ///@notice set Masterchef distriubtion given this.balance 
     function setDistribution() external keeper {
-        uint _balance = IERC20(wbnb).balanceOf(address(this));
-        _safeTransfer(wbnb, masterchef, _balance);
+        uint _balance = IERC20(wIOTX).balanceOf(address(this));
+        _safeTransfer(wIOTX, masterchef, _balance);
         IMasterchef(masterchef).setDistributionRate(_balance);
         lastRewardtime = block.timestamp;
         emit StakingReward(block.timestamp, _balance);
@@ -128,9 +128,9 @@ contract StakingNFTFeeConverter  {
             } 
         }
 
-        _balance = IERC20(wbnb).balanceOf(address(this));
+        _balance = IERC20(wIOTX).balanceOf(address(this));
         if(_balance > 0){
-            _safeTransfer(wbnb, masterchef, _balance);
+            _safeTransfer(wIOTX, masterchef, _balance);
             IMasterchef(masterchef).setDistributionRate(_balance);
         }
         lastRewardtime = block.timestamp;
@@ -163,9 +163,9 @@ contract StakingNFTFeeConverter  {
 
         IRouter01.route memory _routes;
 
-        if(_token0 != wbnb && isToken[_token0] == false){
+        if(_token0 != wIOTX && isToken[_token0] == false){
             _routes.from = _token0;
-            _routes.to = wbnb;
+            _routes.to = wIOTX;
             _routes.stable = false;
             tokenToRoutes[_token0] = _routes;
             isToken[_token0] = true;
@@ -173,9 +173,9 @@ contract StakingNFTFeeConverter  {
             tokens.push(_token0);
         }
 
-        if(_token1 != wbnb && isToken[_token1] == false){
+        if(_token1 != wIOTX && isToken[_token1] == false){
             _routes.from = _token1;
-            _routes.to = wbnb;
+            _routes.to = wIOTX;
             _routes.stable = false;
             tokenToRoutes[_token1] = _routes;
             isToken[_token1] = true;
