@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity 0.8.13;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -19,23 +18,54 @@ contract TraderRewards is Ownable {
     IERC20 public rewardToken; // The token used for rewards
     address public fundAddress; // Address where unclaimed rewards are sent
 
+    /// @notice Keeper register. Return true if 'address' is a keeper.
+    mapping(address => bool) public isKeeper;
+
     event RewardsUpdated(uint256 epoch, RewardInfo[] rewards);
     event RewardClaimed(address indexed trader, uint256 reward);
     event FundAddressUpdated(address newFundAddress);
     event UnclaimedRewardsWithdrawn(uint256 epoch, uint256 amount);
 
+    modifier onlyKeeper {
+        require(msg.sender == owner() || isKeeper[msg.sender],'not keeper'); 
+        _;
+    }
     constructor(IERC20 _rewardToken, address _fundAddress) {
         rewardToken = _rewardToken;
         fundAddress = _fundAddress;
     }
 
+    /// @notice add keepers
+    function addKeeper(address[] memory _keepers) external onlyOwner {
+        uint256 i = 0;
+        uint256 len = _keepers.length;
+
+        for(i; i < len; i++){
+            address _keeper = _keepers[i];
+            if(!isKeeper[_keeper]){
+                isKeeper[_keeper] = true;
+            }
+        }
+    }
+    /// @notice remove keepers
+    function removeKeeper(address[] memory _keepers) external onlyOwner {
+        uint256 i = 0;
+        uint256 len = _keepers.length;
+
+        for(i; i < len; i++){
+            address _keeper = _keepers[i];
+            if(isKeeper[_keeper]){
+                isKeeper[_keeper] = false;
+            }
+        }
+    }  
     function updateFundAddress(address _newFundAddress) external onlyOwner {
         require(_newFundAddress != address(0), "Invalid address");
         fundAddress = _newFundAddress;
         emit FundAddressUpdated(_newFundAddress);
     }
 
-    function updateRewards(RewardInfo[] calldata rewards) external onlyOwner {
+    function updateRewards(RewardInfo[] calldata rewards) external onlyKeeper {
         uint256 lastEpoch = currentEpoch;
         currentEpoch += 1; // Move to the next epoch
 
@@ -59,7 +89,7 @@ contract TraderRewards is Ownable {
             if (rewards[i].trader == msg.sender) {
                 uint256 rewardAmount = rewards[i].reward;
                 require(rewardToken.balanceOf(address(this)) >= rewardAmount, "Insufficient reward tokens");
-                rewardToken.safeTransfer(msg.sender, rewardAmount);
+                rewardToken.transfer(msg.sender, rewardAmount);
 
                 delete rewards[i];
                 emit RewardClaimed(msg.sender, rewardAmount);
@@ -79,7 +109,7 @@ contract TraderRewards is Ownable {
         }
 
         if (totalUnclaimed > 0) {
-            rewardToken.safeTransfer(fundAddress, totalUnclaimed);
+            rewardToken.transfer(fundAddress, totalUnclaimed);
             emit UnclaimedRewardsWithdrawn(epoch, totalUnclaimed);
         }
 
@@ -107,3 +137,4 @@ contract TraderRewards is Ownable {
         return rewardToken.balanceOf(address(this));
     }
 }
+

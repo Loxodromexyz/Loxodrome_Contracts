@@ -13,7 +13,7 @@ async function main () {
 
   // WIOTX need to be updated and use the right address in the mainnet
   const WIOTX= '0x87B873224EaD2a8cbBB7CfB39b18a795e7DA8CC7' // Wrapped IoTeX(WIOTX) deployed in the testnet
-
+  const fundAddress = '0xC2e61CFae2A04d4450533d7Ce7E0BD9607519aEf' // unclaimed tradersRewards will be sent to this address
 
 
 // Loxodrome contracts 
@@ -23,6 +23,8 @@ async function main () {
   Loxo = await data.deploy();
   txDeployed = await Loxo.deployed();
   console.log("Loxo Address: ", Loxo.address)
+
+  const LoxoAd = Loxo.address
 
   data = await ethers.getContractFactory("VeArtProxy");
   veArtProxy = await data.deploy();
@@ -106,10 +108,15 @@ async function main () {
   txDeployed = await Royalties.deployed();
   console.log("Royalties: ", Royalties.address)
 
+  data = await ethers.getContractFactory("TraderRewards");
+  traderRewards = await data.deploy(LoxoAd, fundAddress);
+  txDeployed = await traderRewards.deployed();
+  console.log("TraderRewards: ", traderRewards.address)
+
   // minter
 
   data = await ethers.getContractFactory("Minter");
-  Minter = await data.deploy(voterAd, veLoxoAd, RewardsDistributorAd, MasterChef.address, "0x9Ef4b0B3087a8b2D9f3a78E6cA81a8bF73DD0097"); //traders reward address
+  Minter = await data.deploy(voterAd, veLoxoAd, RewardsDistributorAd, MasterChef.address, traderRewards.address); 
   txDeployed = await Minter.deployed();
   console.log("Minter: ", Minter.address)
 

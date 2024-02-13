@@ -1,4 +1,4 @@
-
+epoch update : bribes, externalBribe gauge, internalBribe, minter, nftsalesSpliter, 
 run 
 
 `npx hardhat run --network IoTex_testnet scripts/deployAll.js`

@@ -13,7 +13,7 @@ contract ExternalBribe is IBribe {
     address public immutable voter; // only voter can modify balances (since it only happens on vote())
     address public immutable _ve; 
 
-    uint internal constant DURATION = 7 days; // rewards are released over the voting period
+    uint internal constant DURATION = 2 days; // rewards are released over the voting period
     uint internal constant MAX_REWARD_TOKENS = 16;
 
     uint internal constant PRECISION = 10 ** 18;

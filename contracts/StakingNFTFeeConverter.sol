@@ -98,7 +98,7 @@ contract StakingNFTFeeConverter  {
     function setDistribution() external keeper {
         uint _balance = IERC20(wIOTX).balanceOf(address(this));
         _safeTransfer(wIOTX, masterchef, _balance);
-        IMasterchef(masterchef).setDistributionRate(_balance);
+        IMasterchef(masterchef).setDistributionRate(_balance, 0);
         lastRewardtime = block.timestamp;
         emit StakingReward(block.timestamp, _balance);
     }
@@ -131,7 +131,7 @@ contract StakingNFTFeeConverter  {
         _balance = IERC20(wIOTX).balanceOf(address(this));
         if(_balance > 0){
             _safeTransfer(wIOTX, masterchef, _balance);
-            IMasterchef(masterchef).setDistributionRate(_balance);
+            IMasterchef(masterchef).setDistributionRate(_balance, 0);
         }
         lastRewardtime = block.timestamp;
         

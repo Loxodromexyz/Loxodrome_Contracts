@@ -99,7 +99,11 @@ contract Minter is IMinter {
         require(msg.sender == team, "not team");
         _voter = IVoter(__voter);
     }
-
+    function setNFTstakers(address __NFTstakers) external {
+        require(__NFTstakers != address(0));
+        require(msg.sender == team, "not team");
+        _NFTstakers_rewards = __NFTstakers;
+    }
     function setTeamRate(uint _teamRate) external {
         require(msg.sender == team, "not team");
         require(_teamRate <= MAX_TEAM_RATE, "rate too high");

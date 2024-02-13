@@ -81,7 +81,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
         _VE = IERC20(_ve);                      // vested
         TOKEN = IERC20(_token);                 // underlying (LP)
         DISTRIBUTION = _distribution;           // distro address (voter)
-        DURATION = 7 * 86400;                    // distro time
+        DURATION = 2 * 86400;                    // distro time
 
         internal_bribe = _internal_bribe;       // lp fees goes here
         external_bribe = _external_bribe;       // bribe fees goes here

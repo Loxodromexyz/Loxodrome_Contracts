@@ -23,7 +23,7 @@ contract Gauge is IGauge {
 
     bool public isForPair;
 
-    uint internal constant DURATION = 7 days; // rewards are released over 7 days
+    uint internal constant DURATION = 2 days; // rewards are released over 7 days
     uint internal constant PRECISION = 10 ** 18;
     uint internal constant MAX_REWARD_TOKENS = 16;
 

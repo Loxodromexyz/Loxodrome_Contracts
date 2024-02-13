@@ -14,7 +14,7 @@ contract WrappedExternalBribe {
     address public immutable _ve;
     ExternalBribe public underlying_bribe;
 
-    uint internal constant DURATION = 7 days; // rewards are released over the voting period
+    uint internal constant DURATION = 2 days; // rewards are released over the voting period
     uint internal constant MAX_REWARD_TOKENS = 16;
 
     uint internal constant PRECISION = 10 ** 18;
@@ -59,7 +59,7 @@ contract WrappedExternalBribe {
     }
 
     function _bribeStart(uint timestamp) internal pure returns (uint) {
-        return timestamp - (timestamp % (7 days));
+        return timestamp - (timestamp % (2 days));
     }
 
     function getEpochStart(uint timestamp) public pure returns (uint) {
