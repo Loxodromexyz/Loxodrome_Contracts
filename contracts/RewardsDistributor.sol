@@ -5,6 +5,7 @@ import './libraries/Math.sol';
 import './interfaces/IERC20.sol';
 import './interfaces/IRewardsDistributor.sol';
 import './interfaces/IVotingEscrow.sol';
+import './interfaces/IVoter.sol';
 
 /*
 
@@ -30,6 +31,10 @@ contract RewardsDistributor is IRewardsDistributor {
 
     uint constant WEEK = 2 * 86400;
 
+    uint internal NonVoterPenalty = 400; // 40% 
+    uint internal constant PRECISION = 1000;
+
+
     uint public start_time;
     uint public time_cursor;
     mapping(uint => uint) public time_cursor_of;
@@ -43,10 +48,12 @@ contract RewardsDistributor is IRewardsDistributor {
     address public owner;
     address public voting_escrow;
     address public token;
+    address public voter;
     address public depositor;
 
     constructor(address _voting_escrow) {
         uint _t = block.timestamp / WEEK * WEEK;
+        voter = msg.sender;
         start_time = _t;
         last_token_time = _t;
         time_cursor = _t;
@@ -277,26 +284,56 @@ contract RewardsDistributor is IRewardsDistributor {
 
     function claimable(uint _tokenId) external view returns (uint) {
         uint _last_token_time = last_token_time / WEEK * WEEK;
-        return _claimable(_tokenId, voting_escrow, _last_token_time);
+        uint amount = _claimable(_tokenId, voting_escrow, _last_token_time);
+        uint claimAmount;
+        uint week_cursor = IVoter(voter).lastVoted(_tokenId);
+        bool hasVoted = false;
+        uint votePeriod = time_cursor - (2 * WEEK);
+        if (week_cursor >= votePeriod) {
+            hasVoted = true;
+        }
+
+        if (amount != 0) {
+            if (hasVoted) {
+                claimAmount = amount; // 100% of the reward for voters
+            } else {
+                claimAmount = amount * NonVoterPenalty / PRECISION; // Reduced reward for non-voters
+            }
+        }
+        return claimAmount;
     }
+
 
     function claim(uint _tokenId) external returns (uint) {
         if (block.timestamp >= time_cursor) _checkpoint_total_supply();
         uint _last_token_time = last_token_time;
         _last_token_time = _last_token_time / WEEK * WEEK;
         uint amount = _claim(_tokenId, voting_escrow, _last_token_time);
+        uint claimAmount;
+        uint week_cursor = IVoter(voter).lastVoted(_tokenId);
+        bool hasVoted = false;
+        uint votePeriod = time_cursor - (2 * WEEK);
+        if(week_cursor >= votePeriod){
+             hasVoted = true;
+        }
+        
         if (amount != 0) {
+            if (hasVoted) {
+                claimAmount = amount; // 100% of the reward
+            } else {
+                claimAmount = amount * NonVoterPenalty / PRECISION;
+            }
             // if locked.end then send directly
             IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(voting_escrow).locked(_tokenId);
             if(_locked.end < block.timestamp){
                 address _nftOwner = IVotingEscrow(voting_escrow).ownerOf(_tokenId);
-                IERC20(token).transfer(_nftOwner, amount);
+                IERC20(token).transfer(_nftOwner, claimAmount);
             } else {
-                IVotingEscrow(voting_escrow).deposit_for(_tokenId, amount);
+                IVotingEscrow(voting_escrow).deposit_for(_tokenId, claimAmount);
             }
-            token_last_balance -= amount;
+            token_last_balance -= claimAmount;
         }
-        return amount;
+        return claimAmount;
     }
 
     function claim_many(uint[] memory _tokenIds) external returns (bool) {
@@ -310,16 +347,28 @@ contract RewardsDistributor is IRewardsDistributor {
             uint _tokenId = _tokenIds[i];
             if (_tokenId == 0) break;
             uint amount = _claim(_tokenId, _voting_escrow, _last_token_time);
+            uint claimAmount;
+            uint week_cursor = IVoter(voter).lastVoted(_tokenId);
+            bool hasVoted = false;
+            uint votePeriod = time_cursor - (2 * WEEK);
+            if(week_cursor >= votePeriod){
+                hasVoted = true;
+            }
             if (amount != 0) {
+                if (hasVoted) {
+                    claimAmount = amount; // 100% of the reward
+                } else {
+                    claimAmount = amount * NonVoterPenalty / PRECISION; 
+                }
                 // if locked.end then send directly
                 IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(_voting_escrow).locked(_tokenId);
                 if(_locked.end < block.timestamp){
                     address _nftOwner = IVotingEscrow(_voting_escrow).ownerOf(_tokenId);
-                    IERC20(token).transfer(_nftOwner, amount);
+                    IERC20(token).transfer(_nftOwner, claimAmount);
                 } else {
-                    IVotingEscrow(_voting_escrow).deposit_for(_tokenId, amount);
+                    IVotingEscrow(_voting_escrow).deposit_for(_tokenId, claimAmount);
                 }
-                total += amount;
+                total += claimAmount;
             }
         }
         if (total != 0) {
@@ -333,7 +382,15 @@ contract RewardsDistributor is IRewardsDistributor {
         require(msg.sender == owner);
         depositor = _depositor;
     }
-
+    function setVoterPenalty(uint _Penalty) external {
+        require(msg.sender == owner);
+        require(_Penalty <= PRECISION, "rate too high");
+        NonVoterPenalty = _Penalty;
+    }
+    function setVoter(address _voter) external {
+        require(msg.sender == owner);
+        voter = _voter;
+    }
     function setOwner(address _owner) external {
         require(msg.sender == owner);
         owner = _owner;
@@ -348,3 +405,4 @@ contract RewardsDistributor is IRewardsDistributor {
 
 
 }
+

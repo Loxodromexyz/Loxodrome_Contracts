@@ -28,7 +28,10 @@ contract RewardAPI is Initializable {
     address public owner;
 
     mapping(address => bool) public notReward;
-
+    struct PairsBribeRewards {
+            address pair;
+            Bribes[] bribes;
+        }
     
     constructor() {}
 
@@ -118,7 +121,7 @@ contract RewardAPI is Initializable {
 
     
     // read all the bribe available for a pair
-    function getPairBribe(address pair) external view returns(Bribes[] memory){
+    function getPairBribe(address pair) public view returns(Bribes[] memory){
 
         address _gauge;
         address _bribe;
@@ -169,7 +172,24 @@ contract RewardAPI is Initializable {
         _rewards.symbols = _symbol;
         _rewards.decimals = _decimals;
     }
+    // View function to fetch bribe rewards for a subset of pairs, based on offset and limit
+    function getPairsBribeRewards(uint offset, uint limit) external view returns (PairsBribeRewards[] memory) {
+        uint pairCount = pairFactory.allPairsLength(); // Assuming this function exists
+        if (offset >= pairCount) {
+            return new PairsBribeRewards[](0); // Return an empty array if offset is beyond the total number of pairs
+        }
 
+        uint fetchCount = (offset + limit > pairCount) ? pairCount - offset : limit; // Calculate number of pairs to fetch, within bounds
+        PairsBribeRewards[] memory rewards = new PairsBribeRewards[](fetchCount);
+
+        for (uint i = 0; i < fetchCount; i++) {
+            address pair = pairFactory.allPairs(offset + i); // Get pair address by index, accounting for offset
+            Bribes[] memory bribesForPair = getPairBribe(pair); // Fetch bribes for this pair
+            rewards[i] = PairsBribeRewards(pair, bribesForPair); // Store results
+        }
+
+        return rewards;
+    }
 
     function addNotReward(address _token) external {
         require(msg.sender == owner, 'not owner');
