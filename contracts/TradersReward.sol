@@ -8,23 +8,28 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 contract TraderRewards is Ownable {
     using SafeERC20 for IERC20;
 
-    struct RewardInfo {
-        address trader;
-        uint256 reward;
-    }
+    mapping(uint256 => bytes32) public epochMerkleRoots; // Mapping from epoch to Merkle Root
+    mapping(uint256 => string) public epochDataURIs; // Epoch => IPFS URI for data
+    mapping(address => mapping(uint256 => uint256)) public claimedRewards;
+    mapping(uint256 => uint256) public totalRewardsPerEpoch;
+    mapping(uint256 => uint256) public totalClaimedPerEpoch;
 
-    mapping(uint256 => RewardInfo[]) public epochRewards; // Mapping from epoch to rewards
     uint256 public currentEpoch;
     IERC20 public rewardToken; // The token used for rewards
     address public fundAddress; // Address where unclaimed rewards are sent
+    uint256 public CLAIM_DEADLINE = 2; // Users have 2 epochs to claim their rewards
 
-    /// @notice Keeper register. Return true if 'address' is a keeper.
     mapping(address => bool) public isKeeper;
 
-    event RewardsUpdated(uint256 epoch, RewardInfo[] rewards);
+    uint256 public lastUpdateTime; // Tracks the last time rewards were updated
+    uint256 public constant EPOCH_DURATION = 86400 * 7; // Duration of each epoch in seconds
+
+    event RewardsUpdated(uint256 epoch, bytes32 merkleRoot);
     event RewardClaimed(address indexed trader, uint256 reward);
     event FundAddressUpdated(address newFundAddress);
+    event DeadlineUpdated(uint256 newDeadline);
     event UnclaimedRewardsWithdrawn(uint256 epoch, uint256 amount);
+    event EpochDataURIUpdated(uint256 indexed epoch, string dataURI);
 
     modifier onlyKeeper {
         require(msg.sender == owner() || isKeeper[msg.sender],'not keeper'); 
@@ -64,72 +69,63 @@ contract TraderRewards is Ownable {
         fundAddress = _newFundAddress;
         emit FundAddressUpdated(_newFundAddress);
     }
+    function updateDeadline(uint256 _epochNumber) external onlyOwner {
+        require(_epochNumber >= 2, "claim period less then 2 epoch");
+        CLAIM_DEADLINE = _epochNumber;
+        emit DeadlineUpdated(_epochNumber);
+    }
+    function updateEpochDataURI(uint256 epoch, string calldata newDataURI) external onlyOwner {
+        require(epoch <= currentEpoch, "Cannot update future epochs");
+        require(bytes(newDataURI).length > 0, "Invalid IPFS URI");
 
-    function updateRewards(RewardInfo[] calldata rewards) external onlyKeeper {
-        uint256 lastEpoch = currentEpoch;
+        epochDataURIs[epoch] = newDataURI;
+
+        emit EpochDataURIUpdated(epoch, newDataURI);
+    }
+    function updateRewards(bytes32 merkleRoot) external onlyKeeper {
+        //require(block.timestamp >= lastUpdateTime + EPOCH_DURATION, "updateRewards can only be called once per epoch");
         currentEpoch += 1; // Move to the next epoch
+        epochMerkleRoots[currentEpoch] = merkleRoot;
+        lastUpdateTime = block.timestamp;
 
-        delete epochRewards[currentEpoch]; // Clear any existing rewards for safety
-        for (uint256 i = 0; i < rewards.length; i++) {
-            epochRewards[currentEpoch].push(rewards[i]);
-        }
-
-        if (lastEpoch > 1) {
-            withdrawUnclaimedRewards(lastEpoch - 1);
-        }
-
-        emit RewardsUpdated(currentEpoch, rewards);
+        emit RewardsUpdated(currentEpoch, merkleRoot);
     }
 
-    function claimReward(uint256 epoch) external {
+     function claimReward(uint256 epoch, uint256 rewardAmount, bytes32[] calldata merkleProof) external {
         require(epoch < currentEpoch, "Cannot claim for ongoing or future epochs");
+        require(currentEpoch <= epoch + CLAIM_DEADLINE, "Claim deadline exceeded for this epoch");
+        require(claimedRewards[msg.sender][epoch] == 0, "Reward already claimed for this epoch");
 
-        RewardInfo[] storage rewards = epochRewards[epoch];
-        for (uint256 i = 0; i < rewards.length; i++) {
-            if (rewards[i].trader == msg.sender) {
-                uint256 rewardAmount = rewards[i].reward;
-                require(rewardToken.balanceOf(address(this)) >= rewardAmount, "Insufficient reward tokens");
-                rewardToken.transfer(msg.sender, rewardAmount);
+        bytes32 leaf = keccak256(abi.encodePacked(msg.sender, rewardAmount));
+        require(verify(merkleProof, epochMerkleRoots[epoch], leaf), "Invalid proof");
+        claimedRewards[msg.sender][epoch] = rewardAmount;
+        rewardToken.safeTransfer(msg.sender, rewardAmount);
 
-                delete rewards[i];
-                emit RewardClaimed(msg.sender, rewardAmount);
-                return;
+        emit RewardClaimed(msg.sender, rewardAmount);
+    }
+
+    function verify(bytes32[] memory proof, bytes32 root, bytes32 leaf) internal pure returns (bool) {
+        bytes32 computedHash = leaf;
+
+        for (uint256 i = 0; i < proof.length; i++) {
+            bytes32 proofElement = proof[i];
+
+            if (computedHash <= proofElement) {
+                // Hash(current computed hash + current element of the proof)
+                computedHash = keccak256(abi.encodePacked(computedHash, proofElement));
+            } else {
+                // Hash(current element of the proof + current computed hash)
+                computedHash = keccak256(abi.encodePacked(proofElement, computedHash));
             }
         }
-        revert("No rewards found for caller in specified epoch");
+
+        // Check if the computed hash (root) is equal to the provided root
+        return computedHash == root;
     }
-
-    function withdrawUnclaimedRewards(uint256 epoch) internal {
-        RewardInfo[] storage rewards = epochRewards[epoch];
-        uint256 totalUnclaimed = 0;
-
-        for (uint256 i = 0; i < rewards.length; i++) {
-            totalUnclaimed += rewards[i].reward;
-            delete rewards[i];
-        }
-
-        if (totalUnclaimed > 0) {
-            rewardToken.transfer(fundAddress, totalUnclaimed);
-            emit UnclaimedRewardsWithdrawn(epoch, totalUnclaimed);
-        }
-
-        delete epochRewards[epoch];
-    }
-
-    // View function to fetch rewards for a specific epoch
-    function getRewardsForEpoch(uint256 epoch) external view returns (RewardInfo[] memory) {
-        return epochRewards[epoch];
-    }
-
-    // View function to check a user's claimable reward for a specific epoch
-    function checkReward(address user, uint256 epoch) external view returns (uint256) {
-        RewardInfo[] memory rewards = epochRewards[epoch];
-        for (uint256 i = 0; i < rewards.length; i++) {
-            if (rewards[i].trader == user) {
-                return rewards[i].reward;
-            }
-        }
-        return 0;
+    ///@notice in case token get stuck.
+    function withdrawERC20() external onlyOwner {
+        uint256 _balance = rewardToken.balanceOf(address(this));
+        rewardToken.transfer(fundAddress, _balance);
     }
 
     // View function to see the current reward token balance of the contract
