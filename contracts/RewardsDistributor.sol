@@ -29,7 +29,7 @@ contract RewardsDistributor is IRewardsDistributor {
         uint max_epoch
     );
 
-    uint constant WEEK = 2 * 86400;
+    uint constant WEEK = 7 * 86400;
 
     uint internal NonVoterPenalty = 400; // 40% 
     uint internal constant PRECISION = 1000;

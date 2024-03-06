@@ -23,7 +23,7 @@ contract Royalties is ReentrancyGuard {
 
     IERC20 public wbnb;
 
-    uint public DISTRIBUTION = 2 * 86400;
+    uint public DISTRIBUTION = 7 * 86400;
 
     uint256 public epoch;
 
