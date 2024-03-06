@@ -38,19 +38,23 @@ contract LoxoHolders is ERC721Enumerable, Ownable {
     mapping(address => uint256) public publicSale;
     mapping(address => uint256) public originalMinters;
 
+    address public multisigWallet;
+
     constructor(
         uint256 _maxSupply,
-        uint256 _nftPrice
+        uint256 _nftPrice,
+        address _multisigWallet
     ) ERC721("LoxoHolders", "LoxoNFT") {
         MAX_SUPPLY = _maxSupply;
         NFT_PRICE = _nftPrice;
 
         presale = Status.Stop;
+        multisigWallet = _multisigWallet;
     }
 
-    function withdraw(uint _amount) public payable onlyOwner {
-        address payable recipient = payable(msg.sender);
-        recipient.transfer(_amount);
+    function withdraw(uint256 _amount) public onlyOwner {
+        require(address(this).balance >= _amount, "Insufficient balance");
+        require(payable(multisigWallet).send(_amount), "Failed to send IOTX");
     }
 
     function setRoot(bytes32 _root) external onlyOwner {
@@ -86,7 +90,7 @@ contract LoxoHolders is ERC721Enumerable, Ownable {
     /**
      * @dev Return the base URI
      */
-    function baseURI() external view returns (string memory) {
+    function getbaseURI() external view returns (string memory) {
         return _baseURI();
     }
 
@@ -162,5 +166,12 @@ contract LoxoHolders is ERC721Enumerable, Ownable {
                 _safeMint(account, totalSupply());
             }
         }
+    }
+
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+
+        string memory baseURI = _baseURI();
+    return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI)) : "";
     }
 }
