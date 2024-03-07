@@ -60,13 +60,16 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
     event Withdraw(address indexed user, uint256 amount);
     event Harvest(address indexed user, uint256 reward);
     event ClaimFees(address indexed from, uint claimed0, uint claimed1);
+    event UserEarned(address indexed user, uint256 amount);
 
     modifier updateReward(address account) {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (account != address(0)) {
-            rewards[account] = earned(account);
+            uint256 userEarned = earned(account);
+            rewards[account] = userEarned;
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
+            emit UserEarned(account, userEarned);
         }
         _;
     }

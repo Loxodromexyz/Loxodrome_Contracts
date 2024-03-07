@@ -26,7 +26,7 @@ contract Minter is IMinter {
     uint public teamRate;
     uint public constant MAX_TEAM_RATE = 50; // 5%
 
-    uint internal constant WEEK = 86400 * 2; // allows minting once per week (reset every Thursday 00:00 UTC)
+    uint internal constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
     // TODO: weekly emission is 10M
     uint public weekly = 375_000 * 1e18; // represents a starting weekly emission of 2.6M Loxo (Loxo has 18 decimals)
     uint public active_period;
@@ -44,6 +44,7 @@ contract Minter is IMinter {
     IRewardsDistributor public immutable _rewards_distributor;
 
     event Mint(address indexed sender, uint weekly, uint circulating_supply, uint circulating_emission);
+    event PeriodUpdated(uint active_period);
 
     constructor(
         address __voter, // the voting & distribution system
@@ -82,6 +83,7 @@ contract Minter is IMinter {
 
         initializer = address(0);
         active_period = ((block.timestamp) / WEEK) * WEEK; // allow minter.update_period() to mint new emissions THIS Thursday
+        emit PeriodUpdated(active_period);
     }
 
     function setTeam(address _team) external {
@@ -234,6 +236,7 @@ contract Minter is IMinter {
             _Loxo.approve(address(_voter), _voterAmount);
             _voter.notifyRewardAmount(_voterAmount);
 
+            emit PeriodUpdated(active_period);
             emit Mint(msg.sender, weekly, circulating_supply(), circulating_emission());
         }
         return _period;

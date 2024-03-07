@@ -55,6 +55,7 @@ contract Bribe is ReentrancyGuard {
         require(owner == msg.sender);
         _;
     }
+  
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -69,6 +70,7 @@ contract Bribe is ReentrancyGuard {
         owner = _owner;
 
         TYPE = _type;
+        emit MinterChanged(minter);
     }
 
     function getEpochStart() public view returns(uint){
@@ -237,6 +239,7 @@ contract Bribe is ReentrancyGuard {
         rewardData[_rewardsToken][_startTimestamp].periodFinish = _startTimestamp + WEEK;
 
         emit RewardAdded(_rewardsToken, reward, _startTimestamp);
+        emit RewardDataUpdated(_rewardsToken, _startTimestamp, rewardData[_rewardsToken][_startTimestamp]);
     }
 
     /* ========== RESTRICTED FUNCTIONS ========== */
@@ -255,6 +258,7 @@ contract Bribe is ReentrancyGuard {
     function setMinter(address _minter) external onlyOwner {
         require(_minter != address(0));
         minter = _minter;
+        emit MinterChanged(minter);
     }
 
     function addRewardToken(address _token) external onlyOwner {
@@ -277,4 +281,6 @@ contract Bribe is ReentrancyGuard {
     event Withdrawn(uint256 indexed tokenId, uint256 amount);
     event RewardPaid(address indexed user,address indexed rewardsToken,uint256 reward);
     event Recovered(address token, uint256 amount);
+    event MinterChanged(address indexed minter);
+    event RewardDataUpdated(address indexed token, uint256 timestamp, Reward reward);
 }
