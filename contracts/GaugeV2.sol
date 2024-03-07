@@ -55,7 +55,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
     uint256 public _totalSupply;
     mapping(address => uint256) public _balances;
 
-    event RewardAdded(uint256 reward);
+    event RewardAdded(uint256 reward, uint256 rewardRate);
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event Harvest(address indexed user, uint256 reward);
@@ -251,7 +251,7 @@ contract GaugeV2 is ReentrancyGuard, Ownable {
 
         lastUpdateTime = block.timestamp;
         periodFinish = block.timestamp.add(DURATION);
-        emit RewardAdded(reward);
+        emit RewardAdded(reward, rewardRate);
     }
 
     function claimFees() external nonReentrant returns (uint claimed0, uint claimed1) {
