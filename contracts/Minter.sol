@@ -18,9 +18,9 @@ contract Minter is IMinter {
     uint internal EMISSION = 990;
     // TODO: Emission decay is 1% or 990/1000 or 99% of total weekly distribution
     uint internal constant TAIL_EMISSION = 2;
-    uint internal REBASEMAX = 100; // 10%
+    uint internal REBASEMAX = 170; // 10% + 7 %
     uint internal NFTStakerMAX = 50; // 5%
-    uint internal TradersMAX = 40; // 4% 
+    uint internal TradersMAX = 80; // 4% 
     
     uint internal constant PRECISION = 1000;
     uint public teamRate;
@@ -55,8 +55,8 @@ contract Minter is IMinter {
     ) {
         initializer = msg.sender;
         team = msg.sender;
-        // TODO: Team rate is 1% and will be increased in the future to 3%
-        teamRate = 10; // 300 bps = 1%
+        // TODO: Team rate is 2% and will be increased in the future to 5%
+        teamRate = 20; // 300 bps = 2%
         _Loxo = ILoxo(IVotingEscrow(__ve).token());
         _voter = IVoter(__voter);
         _ve = IVotingEscrow(__ve);
@@ -175,16 +175,7 @@ contract Minter is IMinter {
         }
     }
     function calculate_NFT_Staker_Reward(uint _weeklyMint) public view returns (uint) {
-        // TODO: NFT staker reward is 5%
-        uint _veTotal = _ve.supply();
-        uint _LoxoTotal = _Loxo.totalSupply();
-        
-        uint lockedShare = (_veTotal) * PRECISION  / _LoxoTotal;
-        if(lockedShare >= NFTStakerMAX){
-            return _weeklyMint * NFTStakerMAX / PRECISION;
-        } else {
-            return _weeklyMint * lockedShare / PRECISION;
-        }
+        return _weeklyMint * NFTStakerMAX / PRECISION;
     }
 
     function calculate_Traders_Reward(uint _weeklyMint) public view returns (uint) {
