@@ -115,10 +115,10 @@ async function main () {
 
   // minter
 
-  data = await ethers.getContractFactory("Minter");
+  data = await ethers.getContractFactory("MinterV2");
   Minter = await data.deploy(voterAd, veLoxoAd, RewardsDistributorAd, MasterChef.address, traderRewards.address); 
   txDeployed = await Minter.deployed();
-  console.log("Minter: ", Minter.address)
+  console.log("MinterV2: ", Minter.address)
 
   // data = await ethers.getContractFactory("AirdropClaimLoxNFT");
   // airdropLoxNFT = await data.deploy(Loxo.address, veLoxoAd);
