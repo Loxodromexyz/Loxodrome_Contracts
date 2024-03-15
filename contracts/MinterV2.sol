@@ -18,12 +18,12 @@ contract MinterV2 is IMinter {
     uint internal EMISSION = 990;
     // TODO: Emission decay is 1% or 990/1000 or 99% of total weekly distribution
     uint internal constant TAIL_EMISSION = 2;
-    uint internal REBASEMAX = 200; // 10%
+    uint internal REBASEMAX = 200; // 20% veLOXO Rebase Up to 15%, Voter 5%
     uint internal NFTStakerMAX = 50; // 5%
     
     uint internal constant PRECISION = 1000;
     uint public teamRate;
-    uint public constant MAX_TEAM_RATE = 50; // 5%
+    uint public constant MAX_TEAM_RATE = 70; // 7%
 
     uint internal constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
     // TODO: weekly emission is 10M
@@ -51,7 +51,7 @@ contract MinterV2 is IMinter {
     ) {
         initializer = msg.sender;
         team = msg.sender;
-        // TODO: Team rate is 1% and will be increased in the future to 3%
+        // Team rate is 7% and will be increased in the future to 5%
         teamRate = 70; // 300 bps = 1%
         _Loxo = ILoxo(IVotingEscrow(__ve).token());
         _voter = IVoter(__voter);
@@ -164,16 +164,7 @@ contract MinterV2 is IMinter {
         }
     }
     function calculate_NFT_Staker_Reward(uint _weeklyMint) public view returns (uint) {
-        // TODO: NFT staker reward is 5%
-        uint _veTotal = _ve.supply();
-        uint _LoxoTotal = _Loxo.totalSupply();
-        
-        uint lockedShare = (_veTotal) * PRECISION  / _LoxoTotal;
-        if(lockedShare >= NFTStakerMAX){
-            return _weeklyMint * NFTStakerMAX / PRECISION;
-        } else {
-            return _weeklyMint * lockedShare / PRECISION;
-        }
+        return _weeklyMint * NFTStakerMAX / PRECISION;
     }
 
     // update period can only be called once per cycle (1 week)

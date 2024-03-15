@@ -31,7 +31,7 @@ contract RewardsDistributor is IRewardsDistributor {
 
     uint constant WEEK = 7 * 86400;
 
-    uint internal NonVoterPenalty = 400; // 40% 
+    uint internal NonVoterPenalty = 750; // 75% 
     uint internal constant PRECISION = 1000;
 
 
