@@ -211,6 +211,47 @@ contract PairAPI is Initializable {
         
 
     }
+    
+    function getPairfees(uint _amounts, uint _offset, address _pair) external view returns(pairBribeEpoch[] memory _pairEpoch){
+
+        require(_amounts <= MAX_EPOCHS, 'too many epochs');
+
+        _pairEpoch = new pairBribeEpoch[](_amounts);
+
+        address _gauge = voter.gauges(_pair);
+
+        IBribeAPI bribe  = IBribeAPI(voter.internal_bribes(_gauge));
+
+        // check bribe and checkpoints exists
+        if(address(0) == address(bribe)){
+            return _pairEpoch;
+        }
+      
+        // scan bribes
+        // get latest balance and epoch start for bribes
+        uint _epochStartTimestamp = bribe.firstBribeTimestamp();
+
+        // if 0 then no bribe created so far
+        if(_epochStartTimestamp == 0){
+            return _pairEpoch;
+        }
+
+        uint _supply;
+        uint i = _offset;
+
+        for(i; i < _offset + _amounts; i++){
+            
+            _supply            = bribe.totalSupplyAt(_epochStartTimestamp);
+            _pairEpoch[i-_offset].epochTimestamp = _epochStartTimestamp;
+            _pairEpoch[i-_offset].pair = _pair;
+            _pairEpoch[i-_offset].totalVotes = _supply;
+            _pairEpoch[i-_offset].bribes = _bribe(_epochStartTimestamp, address(bribe));
+            
+            _epochStartTimestamp += WEEK;
+
+        }
+
+    }
 
     function getPairBribe(uint _amounts, uint _offset, address _pair) external view returns(pairBribeEpoch[] memory _pairEpoch){
 
