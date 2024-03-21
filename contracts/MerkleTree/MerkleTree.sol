@@ -9,7 +9,7 @@ import { MerkleProof } from "@openzeppelin/contracts/utils/cryptography/MerklePr
 import 'hardhat/console.sol';
 
 interface IAirdropClaim {
-    function setUserInfo(address _who, address _to, uint256 _amount) external returns(bool status);
+    function setUserInfo(address _who, address _to, uint256 _amount, uint256 _veAmount) external returns(bool status);
 }
 
 /// @title MerkleClaimERC20
@@ -37,10 +37,6 @@ contract MerkleTree {
 
     /// @notice owner of the contract
     address public owner;
-
-    /// @notice old merle to check hasClaimed
-    address public oldMerkle_1;
-    address public oldMerkle_2;
 
     /// @notice init flag
     bool public init;
@@ -78,8 +74,6 @@ contract MerkleTree {
         airdropClaim = _airdropClaim;
         owner = msg.sender;
         merkleRoot = 0x24b08395d461e7570850b6fc496b5c283511769a7a0acd769201fe7f9d22b998;
-        oldMerkle_1 = 0xFD502Fa14acf1828684090cC08d3c59B6bf74b11;
-        oldMerkle_2 = 0x4259b99c7C6121d0cCe4C9b7C5d8BcE731143Cd7;
     }
 
     /// ============ Events ============
@@ -97,7 +91,7 @@ contract MerkleTree {
     /// @param to address of claimee
     /// @param amount of tokens owed to claimee
     /// @param proof merkle proof to prove address and amount are in tree
-    function claim(address to, uint256 amount, bytes32[] calldata proof) external {
+    function claim(address to, uint256 amount, uint256 veAmount, bytes32[] calldata proof) external {
 
         // check claim is started
         require(init, 'not started');
@@ -113,19 +107,14 @@ contract MerkleTree {
         
         // Throw if address has already claimed tokens
         if (hasClaimed[msg.sender]) revert AlreadyClaimed(_userToCheck);   
-
-        if(IMerkle(oldMerkle_1).hasClaimed(msg.sender) == true || IMerkle(oldMerkle_2).hasClaimed(msg.sender) == true){
-            hasClaimed[msg.sender] = true;
-            return;
-        }
  
         // Verify merkle proof, or revert if not in tree
-        bytes32 leaf = keccak256(abi.encodePacked(_userToCheck, amount));
+        bytes32 leaf = keccak256(abi.encodePacked(_userToCheck, amount, veAmount));
         bool isValidLeaf = MerkleProof.verify(proof, merkleRoot, leaf);
         if (!isValidLeaf) revert NotInMerkle(_userToCheck,amount);
 
         // Mint tokens to msg.sender
-        bool _status = IAirdropClaim(airdropClaim).setUserInfo(msg.sender, to, amount);
+        bool _status = IAirdropClaim(airdropClaim).setUserInfo(msg.sender, to, amount, veAmount);
         require(_status);
         
         // Set address to claimed
