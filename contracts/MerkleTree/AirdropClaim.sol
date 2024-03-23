@@ -12,19 +12,20 @@ contract AirdropClaim is ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     struct UserInfo {
-        uint256 totalAmount;
-        uint256 lockedAmount;
-        uint256 tokenPerSec;
         uint256 lastTimestamp;
-        uint256 claimed;
         address to;
+        uint256 lockedAmount;
+        uint256 lockedClaimed;
+        uint256 totalAmount;
+        uint256 tokenPerSec;
+        uint256 claimed;
     }
 
     bool public init;
 
     uint256 public startTimestamp;
 
-    uint256 public constant DISTRIBUTION_PERIOD = 90 days;
+    uint256 public constant DISTRIBUTION_PERIOD = 180 * 86400; // 6 months
     uint256 public constant LOCK_TIME = 2 * 364 * 86400;
 
     address public owner;
@@ -57,7 +58,6 @@ contract AirdropClaim is ReentrancyGuard {
 
     function deposit(uint256 amount) external {
         require(depositors[msg.sender] == true || msg.sender == owner);
-        require(init == false);
         token.safeTransferFrom(msg.sender, address(this), amount);
         emit Deposit(amount);
     }
@@ -73,7 +73,7 @@ contract AirdropClaim is ReentrancyGuard {
     /// @param _to who's getting the token
     /// @param _amount total amount to claim
     /// @param _veAmount total veLoxo amount to claim
-    function setUserInfo(
+    function setUserInfoAndClaim(
         address _who,
         address _to,
         uint256 _amount,
@@ -89,26 +89,63 @@ contract AirdropClaim is ReentrancyGuard {
         uint256 lastTimestamp = block.timestamp;
         require(lastTimestamp > startTimestamp, 'airdrop no start');
         uint256 tokenPerSec = _amount / DISTRIBUTION_PERIOD;
-        uint256 instant = (lastTimestamp - startTimestamp) * tokenPerSec;
+        uint256 claimed = (lastTimestamp - startTimestamp) * tokenPerSec;
 
         UserInfo memory _userInfo = UserInfo({
-            totalAmount: _amount,
-            lockedAmount: _veAmount,
-            tokenPerSec: tokenPerSec,
             lastTimestamp: lastTimestamp,
-            claimed: instant,
-            to: _to
+            to: _to,
+            totalAmount: _amount,
+            tokenPerSec: tokenPerSec,
+            claimed: claimed,
+            lockedAmount: _veAmount,
+            lockedClaimed: 0
         });
-
         users[_who] = _userInfo;
         usersFlag[_who] = true;
 
-        // send out init amount
-        token.safeTransfer(_to, _veAmount + instant);
+        // transfer
+        token.safeTransfer(_to, claimed);
+
+        status = true;
+    }
+
+    /// @notice set user infromation for the claim
+    /// @param _who is claiming
+    /// @param _to who's getting the token
+    /// @param _amount total amount to claim
+    /// @param _veAmount total veLoxo amount to claim
+    function setUserInfoAndClaimVe(
+        address _who,
+        address _to,
+        uint256 _amount,
+        uint256 _veAmount
+    ) external onlyMerkle nonReentrant returns (bool status) {
+        require(_who != address(0), "addr 0");
+        require(_to != address(0), "addr 0");
+        require(_amount > 0, "amnt 0");
+        require(_veAmount >= 0, "veLoxo amount lte 0");
+        require(usersFlag[_who] == false, "!flag");
+        require(init, "not init");
+
+        uint256 lastTimestamp = block.timestamp;
+        require(lastTimestamp > startTimestamp, 'airdrop no start');
+        uint256 tokenPerSec = _amount / DISTRIBUTION_PERIOD;
+
+        UserInfo memory _userInfo = UserInfo({
+            lastTimestamp: startTimestamp,
+            to: _to,
+            totalAmount: _amount,
+            tokenPerSec: tokenPerSec,
+            claimed: 0,
+            lockedAmount: _veAmount,
+            lockedClaimed: _veAmount
+        });
+        users[_who] = _userInfo;
+        usersFlag[_who] = true;
+        token.safeTransfer(_to, _veAmount);
         token.approve(ve, 0);
         token.approve(ve, _veAmount);
         IVotingEscrow(ve).create_lock_for(_veAmount, LOCK_TIME, _to);
-
         status = true;
     }
 
@@ -151,6 +188,25 @@ contract AirdropClaim is ReentrancyGuard {
         token.safeTransfer(_to, _claimable);
     }
 
+    function claimVe() external nonReentrant {
+        // check user exists
+        require(usersFlag[msg.sender]);
+
+        // load info
+        UserInfo memory user = users[msg.sender];
+
+        require(user.lockedClaimed < user.lockedAmount, 'claimed all');
+
+        uint256 claimable_ = user.lockedAmount - user.lockedClaimed;
+        user.lockedClaimed += claimable_;
+        require(user.lockedClaimed <= user.lockedAmount, 'claimed > total');
+        users[msg.sender] = user;
+        token.safeTransfer(user.to, claimable_);
+        token.approve(ve, 0);
+        token.approve(ve, claimable_);
+        IVotingEscrow(ve).create_lock_for(claimable_, LOCK_TIME, user.to);
+    }
+
     function claimable(address user) public view returns (uint _claimable) {
         // check user exists
         require(usersFlag[user]);
@@ -175,6 +231,14 @@ contract AirdropClaim is ReentrancyGuard {
         uint256 _dT = _timestamp - _user.lastTimestamp;
         require(_dT > 0);
         _claimable = _dT * _user.tokenPerSec;
+    }
+
+    function claimableVe(address account) public view returns (uint _claimable) {
+        // check user exists
+        require(usersFlag[account]);
+        // load info
+        UserInfo memory user = users[account];
+        _claimable = user.lockedAmount - user.lockedClaimed;
     }
 
     /* 

@@ -21,7 +21,7 @@ interface IStakingNFTConverter {
 contract NFTSalesSplitter is OwnableUpgradeable  {
 
     uint256 constant public PRECISION = 1000;
-    uint256 constant public WEEK = 86400 * 2;
+    uint256 constant public WEEK = 86400 * 7;
     uint256 public converterFee;
     uint256 public royaltiesFee;
     
