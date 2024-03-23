@@ -151,16 +151,18 @@ contract MasterChef is Ownable {
     function setDistributionRate(uint256 amount, uint256 amountLOXO) public onlyKeeper {
         updatePool();
         uint256 notDistributed;
+        uint256 notDistributedLOXO;
         if (lastDistributedTime > 0 && block.timestamp < lastDistributedTime) {
             uint256 timeLeft = lastDistributedTime.sub(block.timestamp);
             notDistributed = rewardPerSecond.mul(timeLeft);
+            notDistributedLOXO = rewardPerSecondLOXO.mul(timeLeft);
         }
 
         amount = amount.add(notDistributed);
         uint256 _rewardPerSecond = amount.div(distributePeriod);
         rewardPerSecond = _rewardPerSecond;
         lastDistributedTime = block.timestamp.add(distributePeriod);
-        amountLOXO = amountLOXO.add(notDistributed);
+        amountLOXO = amountLOXO.add(notDistributedLOXO);
         uint256 _rewardPerSecondLOXO = amountLOXO.div(distributePeriod);
         rewardPerSecondLOXO = _rewardPerSecondLOXO;
         emit LogRewardPerSecond(_rewardPerSecond, _rewardPerSecondLOXO);

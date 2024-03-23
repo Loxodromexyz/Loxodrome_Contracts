@@ -7,6 +7,7 @@ import "./interfaces/IRewardsDistributor.sol";
 import "./interfaces/ILoxo.sol";
 import "./interfaces/IVoter.sol";
 import "./interfaces/IVotingEscrow.sol";
+import "./interfaces/IMasterchef.sol";
 
 
 // codifies the minting rules as per ve(3,3), abstracted from the token to support any token that allows minting
@@ -34,7 +35,7 @@ contract MinterV2 is IMinter {
     address internal initializer;
     address public team;
     address public pendingTeam;
-    address public _NFTstakers_rewards;
+    IMasterchef public _NFTstakers_rewards;
     
     ILoxo public immutable _Loxo;
     IVoter public _voter;
@@ -56,7 +57,7 @@ contract MinterV2 is IMinter {
         _Loxo = ILoxo(IVotingEscrow(__ve).token());
         _voter = IVoter(__voter);
         _ve = IVotingEscrow(__ve);
-        _NFTstakers_rewards = __NFTstakers_rewards;
+        _NFTstakers_rewards = IMasterchef(__NFTstakers_rewards);
         _rewards_distributor = IRewardsDistributor(__rewards_distributor);
         active_period = ((block.timestamp + (2 * WEEK)) / WEEK) * WEEK;
         isFirstMint = true;
@@ -98,7 +99,7 @@ contract MinterV2 is IMinter {
     function setNFTstakers(address __NFTstakers) external {
         require(__NFTstakers != address(0));
         require(msg.sender == team, "not team");
-        _NFTstakers_rewards = __NFTstakers;
+        _NFTstakers_rewards = IMasterchef(__NFTstakers);
     }
     function setTeamRate(uint _teamRate) external {
         require(msg.sender == team, "not team");
@@ -198,6 +199,7 @@ contract MinterV2 is IMinter {
             require(_Loxo.transfer(address(_rewards_distributor), _rebase));
             _rewards_distributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
             _rewards_distributor.checkpoint_total_supply(); // checkpoint supply
+            _NFTstakers_rewards.setDistributionRate(0, _nftStakers);
 
             _Loxo.approve(address(_voter), _voterAmount);
             _voter.notifyRewardAmount(_voterAmount);
