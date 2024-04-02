@@ -327,7 +327,7 @@ contract RewardsDistributor is IRewardsDistributor {
             IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(voting_escrow).locked(_tokenId);
             if(_locked.end < block.timestamp){
                 address _nftOwner = IVotingEscrow(voting_escrow).ownerOf(_tokenId);
-                IERC20(token).transfer(_nftOwner, claimAmount);
+                require(IERC20(token).transfer(_nftOwner, claimAmount),'transfer failed');
             } else {
                 IVotingEscrow(voting_escrow).deposit_for(_tokenId, claimAmount);
             }
@@ -364,7 +364,7 @@ contract RewardsDistributor is IRewardsDistributor {
                 IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(_voting_escrow).locked(_tokenId);
                 if(_locked.end < block.timestamp){
                     address _nftOwner = IVotingEscrow(_voting_escrow).ownerOf(_tokenId);
-                    IERC20(token).transfer(_nftOwner, claimAmount);
+                    require(IERC20(token).transfer(_nftOwner, claimAmount),'transfer failed');
                 } else {
                     IVotingEscrow(_voting_escrow).deposit_for(_tokenId, claimAmount);
                 }
@@ -400,7 +400,7 @@ contract RewardsDistributor is IRewardsDistributor {
         require(msg.sender == owner);
         require(_token != address(0));
         uint256 _balance = IERC20(_token).balanceOf(address(this));
-        IERC20(_token).transfer(msg.sender, _balance);
+        require(IERC20(_token).transfer(msg.sender, _balance),'transfer failed');
     }
 
 
