@@ -35,6 +35,7 @@ contract VoterV2 is IVoter, OwnableUpgradeable, ReentrancyGuardUpgradeable {
     mapping(address => uint) public claimable;
 
     uint public totalWeight; // total voting weight
+    uint256[50] private __gap;
 
     address[] public pools; // all pools viable for incentives
     mapping(address => address) public gauges; // pool => gauge
