@@ -92,7 +92,7 @@ async function main () {
  // step 0 deploy NFT contract 
 
   const LoxoHoldersContract = await ethers.getContractFactory("contracts/LoxoHolders.sol:LoxoHolders");
-  const LoxoHolders = await LoxoHoldersContract.deploy(5000, '1000000000000000000');
+  const LoxoHolders = await LoxoHoldersContract.deploy(5000, '1000000000000000000', owner.address);
 
   await LoxoHolders.deployed();
 
@@ -116,7 +116,8 @@ async function main () {
   // minter
 
   data = await ethers.getContractFactory("MinterV2");
-  Minter = await data.deploy(voterAd, veLoxoAd, RewardsDistributorAd, MasterChef.address, traderRewards.address); 
+  // Minter = await data.deploy(voterAd, veLoxoAd, RewardsDistributorAd, MasterChef.address, traderRewards.address); 
+  Minter = await data.deploy(voterAd, veLoxoAd, RewardsDistributorAd, MasterChef.address); 
   txDeployed = await Minter.deployed();
   console.log("MinterV2: ", Minter.address)
 
