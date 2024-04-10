@@ -320,9 +320,9 @@ contract MasterChef is Ownable {
             if(pendingLOXO > LIMIT){
                 LOXO.approve(address(_ve), pendingLOXO);
                 _ve.create_lock_for((pendingLOXO.mul(RATIO) / PRECISION), LOCK, msg.sender);
-                LOXO.transfer(msg.sender, (pendingLOXO.mul(1000 - RATIO) / PRECISION));
+                require(LOXO.transfer(msg.sender, (pendingLOXO.mul(1000 - RATIO) / PRECISION)),'transfer failed');
             }else {
-                LOXO.transfer(msg.sender, pendingLOXO);
+                require(LOXO.transfer(msg.sender, pendingLOXO), 'transfer failed');
             }
          
         }
