@@ -27,8 +27,7 @@ contract Minter is IMinter {
     uint public constant MAX_TEAM_RATE = 50; // 5%
 
     uint internal constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
-    // TODO: weekly emission is 10M
-    uint public weekly = 375_000 * 1e18; // represents a starting weekly emission of 2.6M Loxo (Loxo has 18 decimals)
+    uint public weekly = 375_000 * 1e18; // represents a starting weekly emission of 0.375M Loxo (Loxo has 18 decimals)
     uint public active_period;
     uint internal constant LOCK = 86400 * 7 * 52 * 2;
 
