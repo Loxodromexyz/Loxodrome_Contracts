@@ -13,7 +13,7 @@ contract PairFactory is IPairFactory {
     uint256 public stableFee;
     uint256 public volatileFee;
     uint256 public stakingNFTFee;
-    uint256 public MAX_REFERRAL_FEE = 5000; // 50% for team
+    uint256 public MAX_REFERRAL_FEE = 4500; // 45% for team
     uint256 public constant MAX_FEE = 50; // 0.5%
 
     address public feeManager;
